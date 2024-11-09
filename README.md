@@ -8,6 +8,8 @@ currently a monolithic one but in a way that it can be
 seperated pretty easily, 
 each directory is a service which will have its separate
 mod file and dockerfile
+
+```
 .
 ├── LICENSE
 ├── README.md
@@ -33,5 +35,4 @@ mod file and dockerfile
 └── web-service
     ├── Dockerfile
     └── main.go
-
-9 directories, 16 files
+```
