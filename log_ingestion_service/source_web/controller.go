@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,5 +22,10 @@ func ingestData(c *gin.Context) {
         return
     }
   //ingest loginfo to kafka
+  value, err := json.Marshal(logInfo)
+  if err!= nil{
+    c.IndentedJSON(http.StatusInternalServerError, err)
+  }
+  ingestToKafka(value, logTopic)
  c.IndentedJSON(http.StatusCreated, logInfo)
 }
