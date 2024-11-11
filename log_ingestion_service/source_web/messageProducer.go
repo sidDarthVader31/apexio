@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 )
 
@@ -14,14 +12,10 @@ import (
 const logTopic = "logs.ingestion.raw.v1"
 
 
-func ingestToKafka[T interface{}](data T){
-  value, err := json.Marshal(data)
-  if err!=nil{
-    panic(err)
-  }
-  topic := logTopic
+func ingestToKafka(value []byte, topic string) (bool){
   kafkaConnector.Produce(&kafka.Message{
   TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
   Value: value,
  }, nil)
+  return true;
 }
