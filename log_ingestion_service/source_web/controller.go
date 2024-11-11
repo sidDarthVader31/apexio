@@ -17,21 +17,21 @@ type LogInfo struct {
 
 
 type metadata struct {
-  request_id string                 `json:"requestId"` 
-  client_ip  string                 `json:"clientIp"` 
-  user_agent string                 `json:"userAgent"` 
-  request_method string             `json:"requestMethod"` 
-  request_path string               `json:"requestPath"` 
-  response_status string            `json:"responseStatus"` 
-  response_duration string          `json:"responseDuration"` 
-  extra map[string] string          `json:"extra"` 
+  Request_id string                 `json:"requestId"` 
+  Client_ip  string                 `json:"clientIp"` 
+  User_agent string                 `json:"userAgent"` 
+  Request_method string             `json:"requestMethod"` 
+  Request_path string               `json:"requestPath"` 
+  Response_status string            `json:"responseStatus"` 
+  Response_duration string          `json:"responseDuration"` 
+  Extra map[string] string          `json:"extra"` 
 }
 
 type source struct{
-  host string                       `json:"host"` 
-  service string                    `json:"service"` 
-  environment string                `json:"environment"` 
-  extra map[string] string          `json:"extra"` 
+  Host string                       `json:"host"` 
+  Service string                    `json:"service"` 
+  Environment string                `json:"environment"` 
+  Extra map[string] string          `json:"extra"` 
 }
 func ingestData(c *gin.Context) {
   var logInfo LogInfo
