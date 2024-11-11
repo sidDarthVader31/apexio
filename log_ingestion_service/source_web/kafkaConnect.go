@@ -12,7 +12,7 @@ var kafkaConnector *kafka.Producer
 func connectKafka() *kafka.Producer{
   kafkaConnector,err :=  kafka.NewProducer(&kafka.ConfigMap{
     "bootstrap.servers":"host",
-    "client.id":"myproducer",
+    "client.id":"logProducer",
     "acks":"all",
   })
   if err!=nil{
