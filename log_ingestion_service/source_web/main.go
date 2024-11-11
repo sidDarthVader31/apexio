@@ -12,5 +12,6 @@ func main(){
     })
   })
   initRoutes(Routev1)
+  connectKafka()
   r.Run()
 }
