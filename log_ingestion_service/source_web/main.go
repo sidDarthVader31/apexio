@@ -1,3 +1,4 @@
+//main file for REST based web service to ingest logs 
 package main
 
 import (
@@ -17,8 +18,8 @@ func main(){
     })
   })
   initRoutes(Routev1)
-  isKafkaConnected,_ := connectKafka()
-  if isKafkaConnected == false{
+  _,err := connectKafka()
+  if err!=nil{
     fmt.Println("error connecting to kafka")
     os.Exit(1)
   }

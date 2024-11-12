@@ -7,7 +7,7 @@ import (
 
 
 var KafkaConnector *kafka.Producer
-func connectKafka() (bool,*kafka.Producer){
+func connectKafka() (*kafka.Producer, error){
   var err error
   KafkaConnector,err =  kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"localhost:9092",
     "client.id":"logProducer",
@@ -15,8 +15,8 @@ func connectKafka() (bool,*kafka.Producer){
   })
   if err!=nil{
     fmt.Printf("error connecting to kafka %v, shutting down the server", err)
-    return false, nil
+    return nil, err
   }
   fmt.Println("connected to kafka ")
-  return true, KafkaConnector
+  return KafkaConnector, nil
 }
