@@ -1,6 +1,11 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
 
 var Routev1 *gin.RouterGroup;
 func main(){
@@ -12,6 +17,10 @@ func main(){
     })
   })
   initRoutes(Routev1)
-  connectKafka()
+  isKafkaConnected,_ := connectKafka()
+  if isKafkaConnected == false{
+    fmt.Println("error connecting to kafka")
+    os.Exit(1)
+  }
   r.Run()
 }
