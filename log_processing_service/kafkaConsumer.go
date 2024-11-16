@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log-processor/datastore/models"
 	"os"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -25,10 +27,14 @@ func getLogs(){
     ev := KafkaConnector.Poll(100)
     switch e := ev.(type){
     case *kafka.Message:
-    fmt.Println("received kafka message")
+      fmt.Println("received kafka message")
       fmt.Println("log:", string(e.Value))
-        //basic preprocessing
-        //ingest to elastick
+      var logData models.LogInfo
+      err := json.Unmarshal(e.Value, &logData)
+      if err!=nil{
+        fmt.Println("error while processing log:", err)
+      }
+      logData.Insert()
     case kafka.Error:
       fmt.Fprintf(os.Stderr, "%% Error: %v\n", e)
     run = false
