@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-
 	"github.com/gin-gonic/gin"
+  ds "log-processor/datastore"
 )
 
 var Routev1 *gin.RouterGroup;
@@ -22,6 +22,7 @@ func main(){
     fmt.Println("error connecting to kafka")
     os.Exit(1)
   }
+  ds.ConnectToElastic()
   getLogs()
   fmt.Println("go consumer running")
   r.Run()

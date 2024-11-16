@@ -10,7 +10,7 @@ import (
 
 var Es *elasticsearch.Client
 var err error
-func elasticConnect() (*elasticsearch.Client, error){
+func ConnectToElastic() (*elasticsearch.Client, error){
   cfg := elasticsearch.Config{
     Addresses: []string{
       "http://localhost:9200",
