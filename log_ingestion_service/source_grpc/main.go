@@ -23,7 +23,7 @@ type logServer struct {
 
  func (s *logServer) IngestLog( ctx context.Context, in *LogRequest) (*LogResponse, error) {
   fmt.Println("in:", in)
-  value, err := json.Marshal(in)
+  value, err := json.Marshal(in.Entry)
   if err != nil {
     return nil, err
   }

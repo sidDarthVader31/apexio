@@ -44,6 +44,7 @@ type source struct{
 
 func (l *LogInfo) Insert(){
   data, e := json.Marshal(l)
+
   if e!= nil{
     fmt.Println("error while converting to json:", e)
   }
