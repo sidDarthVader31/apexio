@@ -29,7 +29,7 @@ func getLogs(){
     case *kafka.Message:
       fmt.Println("received kafka message")
       fmt.Println("log:", string(e.Value))
-      var logData models.LogInfo
+       var logData models.LogInfo
       err := json.Unmarshal(e.Value, &logData)
       if err!=nil{
         fmt.Println("error while processing log:", err)

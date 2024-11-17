@@ -11,7 +11,37 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
-
+/**
+elasticsearch index mapping : 
+{
+  "properties": {
+    "id": {"type": "integer"},
+    "metadata": {
+      "properties": {
+        "requestId": {"type": "keyword"},
+        "clientIp": {"type": "ip"},
+        "userAgent": {"type": "text"},
+        "requestMethod": {"type": "keyword"},
+        "requestPath": {"type": "text"},
+        "responseStatus": {"type": "keyword"},
+        "responseDuration": {"type": "text"},
+        "extra": {"type": "object"}
+      }
+    },
+    "timestamp": {"type": "date"},
+    "logLevel": {"type": "keyword"},
+    "message": {"type": "text"},
+    "source": {
+      "properties": {
+        "host": {"type": "keyword"},
+        "service": {"type": "keyword"},
+        "environment": {"type": "keyword"},
+        "extra": {"type": "object"}
+      }
+    }
+  }
+}
+**/ 
 type LogInfo struct {
 	Id        uint                    `json:"id"`
 	Metadata  metadata                `json:"metadata"` 
@@ -44,6 +74,7 @@ type source struct{
 
 func (l *LogInfo) Insert(){
   data, e := json.Marshal(l)
+
   if e!= nil{
     fmt.Println("error while converting to json:", e)
   }

@@ -1,39 +1,35 @@
 syntax = "proto3";
-
 package logging;
 option go_package = "source_grpc/proto";
-// LogEntry represents a single log entry
-message LogEntry {
-  string timestamp = 1;
-  string log_level = 2;
-  string message = 3;
+message LogInfo {
+  uint64 id = 1;
+  uint64 timestamp = 2;
+  string logLevel = 3;
+  string message = 4;
+  Metadata metadata = 5;
+  Source source = 6;
 
-  // Metadata associated with the log entry
   message Metadata {
-    string request_id = 1;
-    string client_ip = 2;
-    string user_agent = 3;
-    string request_method = 4;
-    string request_path = 5;
-    int32 response_status = 6;
-    int32 response_duration = 7;
-    map<string, string> extra = 8;
+  string requestId = 1;
+  string clientIp = 2;
+  string userAgent = 3;
+  string requestMethod = 4;
+  string requestPath = 5;
+  string responseStatus = 6;
+  string responseDuration = 7;
+  map<string, string> extra = 8;
   }
-  Metadata metadata = 4;
 
-  // Source information for the log entry
   message Source {
-    string host = 1;
-    string service = 2;
-    string environment = 3;
-    map<string, string> extra = 4;
+  string host = 1;
+  string service = 2;
+  string environment = 3;
+  map<string, string> extra = 4;
   }
-  Source source = 5;
 }
-
 // LogRequest represents a request to ingest logs
 message LogRequest {
-  LogEntry entry = 1;
+  LogInfo entry = 1;
 }
 
 // LogResponse represents a response to a log ingestion request
