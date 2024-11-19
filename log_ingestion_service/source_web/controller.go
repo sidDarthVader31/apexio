@@ -46,6 +46,7 @@ const (
 func ingestData(c *gin.Context) {
   var logInfo LogInfo
   if err := c.BindJSON(&logInfo); err != nil {
+    fmt.Println("issue creating json", err)
         return
     }
   //ingest loginfo to kafka
