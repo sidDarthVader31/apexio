@@ -1,10 +1,9 @@
-//main file for REST based web service to ingest logs 
+// main file for REST based web service to ingest logs
 package main
 
 import (
 	"fmt"
 	"os"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func main(){
     })
   })
   initRoutes(Routev1)
-  _,err := connectKafka()
+  _,err := ConnectKafka()
   if err!=nil{
     fmt.Println("error connecting to kafka")
     os.Exit(1)
