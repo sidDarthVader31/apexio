@@ -15,8 +15,8 @@ message LogInfo {
   string userAgent = 3;
   string requestMethod = 4;
   string requestPath = 5;
-  string responseStatus = 6;
-  string responseDuration = 7;
+  int32 responseStatus = 6;
+  double responseDuration = 7;
   map<string, string> extra = 8;
   }
 
@@ -27,7 +27,16 @@ message LogInfo {
   map<string, string> extra = 4;
   }
 }
-// LogRequest represents a request to ingest logs
+
+// // LogLevel enum for consistent log levels
+// enum LogLevel {
+//   LOG_LEVEL_UNSPECIFIED = 0;
+//   LOG_LEVEL_DEBUG = 1;
+//   LOG_LEVEL_INFO = 2;
+//   LOG_LEVEL_WARN = 3;
+//   LOG_LEVEL_ERROR = 4;
+//   LOG_LEVEL_FATAL = 5;
+
 message LogRequest {
   LogInfo entry = 1;
 }

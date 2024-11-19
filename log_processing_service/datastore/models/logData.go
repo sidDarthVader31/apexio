@@ -7,36 +7,90 @@ import (
 	"fmt"
 	"log"
 	"log-processor/datastore"
-
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 /**
-elasticsearch index mapping : 
+elastic search index mapping -
 {
-  "properties": {
-    "id": {"type": "integer"},
-    "metadata": {
-      "properties": {
-        "requestId": {"type": "keyword"},
-        "clientIp": {"type": "ip"},
-        "userAgent": {"type": "text"},
-        "requestMethod": {"type": "keyword"},
-        "requestPath": {"type": "text"},
-        "responseStatus": {"type": "keyword"},
-        "responseDuration": {"type": "text"},
-        "extra": {"type": "object"}
-      }
-    },
-    "timestamp": {"type": "date"},
-    "logLevel": {"type": "keyword"},
-    "message": {"type": "text"},
-    "source": {
-      "properties": {
-        "host": {"type": "keyword"},
-        "service": {"type": "keyword"},
-        "environment": {"type": "keyword"},
-        "extra": {"type": "object"}
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "long"
+      },
+      "metadata": {
+        "properties": {
+          "requestId": {
+            "type": "keyword"
+          },
+          "clientIp": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "requestMethod": {
+            "type": "keyword"
+          },
+          "requestPath": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "responseStatus": {
+            "type": "integer"
+          },
+          "responseDuration": {
+            "type": "float"
+          },
+          "extra": {
+            "type": "object",
+            "dynamic": true
+          }
+        }
+      },
+      "timestamp": {
+        "type": "date",
+        "format": "epoch_millis"
+      },
+      "logLevel": {
+        "type": "keyword"
+      },
+      "message": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "source": {
+        "properties": {
+          "host": {
+            "type": "keyword"
+          },
+          "service": {
+            "type": "keyword"
+          },
+          "environment": {
+            "type": "keyword"
+          },
+          "extra": {
+            "type": "object",
+            "dynamic": true
+          }
+        }
       }
     }
   }
@@ -44,34 +98,40 @@ elasticsearch index mapping :
 **/ 
 type LogInfo struct {
 	Id        uint                    `json:"id"`
-	Metadata  metadata                `json:"metadata"` 
+	Metadata  Metadata                `json:"metadata"` 
   Timestamp uint64                  `json:"timestamp"`
   Loglevel  string                  `json:"logLevel"`
   Message   string                  `json:"message"`
-  Source    source                  `json:"source"`
+  Source    Source                 `json:"source"`
 }
 
 
-type metadata struct {
-  Request_id string                 `json:"requestId"` 
-  Client_ip  string                 `json:"clientIp"` 
-  User_agent string                 `json:"userAgent"` 
-  Request_method string             `json:"requestMethod"` 
-  Request_path string               `json:"requestPath"` 
-  Response_status string            `json:"responseStatus"` 
-  Response_duration string          `json:"responseDuration"` 
+type Metadata struct {
+  RequestId string                 `json:"requestId"` 
+  ClientIp  string                 `json:"clientIp"` 
+  UserAgent string                 `json:"userAgent"` 
+  RequestMethod string             `json:"requestMethod"` 
+  RequestPath string               `json:"requestPath"` 
+  ResponseStatus int            `json:"responseStatus"` 
+  ResponseDuration float32          `json:"responseDuration"` 
   Extra map[string] string          `json:"extra"` 
 }
 
-type source struct{
+type Source struct{
   Host string                       `json:"host"` 
   Service string                    `json:"service"` 
   Environment string                `json:"environment"` 
   Extra map[string] string          `json:"extra"` 
 }
-
-
-
+type LogLevel string
+// Constants for LogLevel
+const (
+	LogLevelDebug   LogLevel = "DEBUG"
+	LogLevelInfo    LogLevel = "INFO"
+	LogLevelWarn    LogLevel = "WARN"
+	LogLevelError   LogLevel = "ERROR"
+	LogLevelFatal   LogLevel = "FATAL"
+)
 func (l *LogInfo) Insert(){
   data, e := json.Marshal(l)
 

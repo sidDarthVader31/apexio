@@ -7,34 +7,42 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
 type LogInfo struct {
 	Id        uint                    `json:"id"`
-	Metadata  metadata                `json:"metadata"` 
+	Metadata  Metadata                `json:"metadata"` 
   Timestamp uint64                  `json:"timestamp"`
   Loglevel  string                  `json:"logLevel"`
   Message   string                  `json:"message"`
-  Source    source                  `json:"source"`
+  Source    Source                  `json:"source"`
 }
 
 
-type metadata struct {
-  Request_id string                 `json:"requestId"` 
-  Client_ip  string                 `json:"clientIp"` 
-  User_agent string                 `json:"userAgent"` 
-  Request_method string             `json:"requestMethod"` 
-  Request_path string               `json:"requestPath"` 
-  Response_status string            `json:"responseStatus"` 
-  Response_duration string          `json:"responseDuration"` 
+type Metadata struct {
+  RequestId string                  `json:"requestId"` 
+  ClientIp  string                  `json:"clientIp"` 
+  UserAgent string                  `json:"userAgent"` 
+  RequestMethod string              `json:"requestMethod"` 
+  RequestPath string                `json:"requestPath"` 
+  ResponseStatus int                `json:"responseStatus"` 
+  ResponseDuration float32          `json:"responseDuration"` 
   Extra map[string] string          `json:"extra"` 
 }
 
-type source struct{
+type Source struct{
   Host string                       `json:"host"` 
   Service string                    `json:"service"` 
   Environment string                `json:"environment"` 
   Extra map[string] string          `json:"extra"` 
 }
+type LogLevel string
+// Constants for LogLevel
+const (
+	LogLevelDebug   LogLevel = "DEBUG"
+	LogLevelInfo    LogLevel = "INFO"
+	LogLevelWarn    LogLevel = "WARN"
+	LogLevelError   LogLevel = "ERROR"
+	LogLevelFatal   LogLevel = "FATAL"
+)
 func ingestData(c *gin.Context) {
   var logInfo LogInfo
   if err := c.BindJSON(&logInfo); err != nil {
