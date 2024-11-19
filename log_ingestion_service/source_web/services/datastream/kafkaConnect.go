@@ -7,7 +7,7 @@ import (
 
 
 var KafkaConnector *kafka.Producer
-func ConnectKafka() (*kafka.Producer, error){
+func connectKafka() (*kafka.Producer, error){
   var err error
   KafkaConnector,err =  kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"localhost:9092",
     "client.id":"logProducer",
