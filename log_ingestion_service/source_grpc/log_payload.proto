@@ -4,7 +4,7 @@ option go_package = "source_grpc/proto";
 message LogInfo {
   uint64 id = 1;
   uint64 timestamp = 2;
-  LogLevel logLevel = 3;
+  string logLevel = 3;
   string message = 4;
   Metadata metadata = 5;
   Source source = 6;
@@ -28,16 +28,15 @@ message LogInfo {
   }
 }
 
-// LogLevel enum for consistent log levels
-enum LogLevel {
-  LOG_LEVEL_UNSPECIFIED = 0;
-  LOG_LEVEL_DEBUG = 1;
-  LOG_LEVEL_INFO = 2;
-  LOG_LEVEL_WARN = 3;
-  LOG_LEVEL_ERROR = 4;
-  LOG_LEVEL_FATAL = 5;
-}
-// LogRequest represents a request to ingest logs
+// // LogLevel enum for consistent log levels
+// enum LogLevel {
+//   LOG_LEVEL_UNSPECIFIED = 0;
+//   LOG_LEVEL_DEBUG = 1;
+//   LOG_LEVEL_INFO = 2;
+//   LOG_LEVEL_WARN = 3;
+//   LOG_LEVEL_ERROR = 4;
+//   LOG_LEVEL_FATAL = 5;
+
 message LogRequest {
   LogInfo entry = 1;
 }

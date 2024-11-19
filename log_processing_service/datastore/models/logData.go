@@ -7,15 +7,100 @@ import (
 	"fmt"
 	"log"
 	"log-processor/datastore"
-	"net"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
+/**
+elastic search index mapping -
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "long"
+      },
+      "metadata": {
+        "properties": {
+          "requestId": {
+            "type": "keyword"
+          },
+          "clientIp": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "requestMethod": {
+            "type": "keyword"
+          },
+          "requestPath": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "responseStatus": {
+            "type": "integer"
+          },
+          "responseDuration": {
+            "type": "float"
+          },
+          "extra": {
+            "type": "object",
+            "dynamic": true
+          }
+        }
+      },
+      "timestamp": {
+        "type": "date",
+        "format": "epoch_millis"
+      },
+      "logLevel": {
+        "type": "keyword"
+      },
+      "message": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "source": {
+        "properties": {
+          "host": {
+            "type": "keyword"
+          },
+          "service": {
+            "type": "keyword"
+          },
+          "environment": {
+            "type": "keyword"
+          },
+          "extra": {
+            "type": "object",
+            "dynamic": true
+          }
+        }
+      }
+    }
+  }
+}
+**/ 
 type LogInfo struct {
 	Id        uint                    `json:"id"`
 	Metadata  Metadata                `json:"metadata"` 
   Timestamp uint64                  `json:"timestamp"`
-  Loglevel  LogLevel                  `json:"logLevel"`
+  Loglevel  string                  `json:"logLevel"`
   Message   string                  `json:"message"`
   Source    Source                 `json:"source"`
 }
@@ -23,7 +108,7 @@ type LogInfo struct {
 
 type Metadata struct {
   RequestId string                 `json:"requestId"` 
-  ClientIp  net.IP                 `json:"clientIp"` 
+  ClientIp  string                 `json:"clientIp"` 
   UserAgent string                 `json:"userAgent"` 
   RequestMethod string             `json:"requestMethod"` 
   RequestPath string               `json:"requestPath"` 

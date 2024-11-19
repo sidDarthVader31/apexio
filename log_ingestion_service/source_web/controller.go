@@ -3,16 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
-
 type LogInfo struct {
 	Id        uint                    `json:"id"`
 	Metadata  Metadata                `json:"metadata"` 
   Timestamp uint64                  `json:"timestamp"`
-  Loglevel  LogLevel                `json:"logLevel"`
+  Loglevel  string                  `json:"logLevel"`
   Message   string                  `json:"message"`
   Source    Source                  `json:"source"`
 }
@@ -20,7 +19,7 @@ type LogInfo struct {
 
 type Metadata struct {
   RequestId string                  `json:"requestId"` 
-  ClientIp  net.IP                  `json:"clientIp"` 
+  ClientIp  string                  `json:"clientIp"` 
   UserAgent string                  `json:"userAgent"` 
   RequestMethod string              `json:"requestMethod"` 
   RequestPath string                `json:"requestPath"` 
