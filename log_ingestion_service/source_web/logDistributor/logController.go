@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ingestData(c *gin.Context) {
+func IngestData(c *gin.Context) {
   var logInfo LogInfo
   if err := c.BindJSON(&logInfo); err != nil {
     fmt.Println("error while creating json", err)

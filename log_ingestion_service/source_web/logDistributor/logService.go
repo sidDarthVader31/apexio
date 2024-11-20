@@ -1,9 +1,11 @@
 package logDistributor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"sourceweb/service/kafka"
+	"sourceweb/constants"
+	datastream "sourceweb/service/dataStream"
 )
 
 
@@ -16,7 +18,7 @@ func ingestLogs(logData LogInfo, logTopic string) (bool, error) {
     fmt.Println("error converting to json", err)
     return false, err
   }
-  success, err := kafka.IngestToKafka(value, logTopic)
+  success, err := datastream.StreamService.ProduceMessage(context.Background(),value, constants.LogTopic)
   return success, err
 }
 
