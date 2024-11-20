@@ -2,11 +2,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	datastream "sourceweb/service/dataStream"
+
 	"github.com/gin-gonic/gin"
 )
-
 var Routev1 *gin.RouterGroup;
 func main(){
   r := gin.Default()
@@ -17,9 +19,11 @@ func main(){
     })
   })
   initRoutes(Routev1)
-  _,err := ConnectKafka()
-  if err!=nil{
-    fmt.Println("error connecting to kafka")
+  DataStreamService, dataStreamError := datastream.CreateDataStream("KAFKA", map[string]string{"baseurl":"http://localhost:9092"})
+  DataStreamService.Connect(context.Background(), map[string]string{})
+
+  if dataStreamError!=nil{
+    fmt.Println("error connecting to kafka:", dataStreamError)
     os.Exit(1)
   }
   r.Run()
