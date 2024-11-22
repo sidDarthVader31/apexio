@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sourceweb/constants"
 	datastream "sourceweb/service/dataStream"
 )
 
@@ -18,7 +17,7 @@ func ingestLogs(logData LogInfo, logTopic string) (bool, error) {
     fmt.Println("error converting to json", err)
     return false, err
   }
-  success, err := datastream.StreamService.ProduceMessage(context.Background(),value, constants.LogTopic)
+  success, err := datastream.StreamService.ProduceMessage(context.Background(),value, logTopic)
   return success, err
 }
 

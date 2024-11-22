@@ -15,6 +15,7 @@ func IngestData(c *gin.Context) {
     }
   success, err := ingestLogs(logInfo, constants.LogTopic)
   if success == false {
+    fmt.Println("error while ingeting logs :", err)
     c.IndentedJSON(http.StatusNotFound, err)
   }
  c.IndentedJSON(http.StatusCreated, logInfo)
