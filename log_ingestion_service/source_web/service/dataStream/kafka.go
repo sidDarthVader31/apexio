@@ -7,7 +7,6 @@ import (
 	"sourceweb/constants"
 	"sync"
 	"time"
-
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -52,7 +51,7 @@ func (k *KafkaService) Connect(ctx context.Context, confi map[string]string) err
     producer: kafkaConnector,
     batchSize: constants.BatchSize,
     batchWindow: constants.BufferTime,
-    buffer: make([][]byte, constants.BatchSize),
+    buffer: make([][]byte, 0, constants.BatchSize),
     logChan : make(chan []byte, constants.BatchSize*2), // buffer channel to handle spike in traffic 
     done: make(chan struct{}),
   }
@@ -62,58 +61,49 @@ func (k *KafkaService) Connect(ctx context.Context, confi map[string]string) err
 
 func (k *KafkaService) ProduceMessage(ctx context.Context, message []byte, topicName string) (bool, error) {
   // Kafka produce logic
-  fmt.Println("producing kafka message")
-  fmt.Println("buffer size:", len(k.batchProcess.buffer))
-  fmt.Println("log chan producer::", k.batchProcess.logChan)
   k.batchProcess.topicName = topicName
   select {
   case k.batchProcess.logChan <-message:
     return true, nil
-  default: 
+  default:
     return false, errors.New("log channel is full")
   }
 }
 
-func (k KafkaService) Close(){
-  close(k.batchProcess.done)
-  k.batchProcess.producer.Close()
+func (k *KafkaService) Close(){
 }
 
 func(b * batchProcess) processLogs(){
   ticker := time.NewTicker(b.batchWindow)
-  fmt.Println("started with process logs()")
-  fmt.Println("b:", b)
-  fmt.Println("log chan:", b.logChan)
-  defer ticker.Stop()
+  defer func() {
+        ticker.Stop()
+        fmt.Println("Exiting processLogs goroutine.")
+    }()
   for {
     select{
     //when new log comes in 
     case log := <-b.logChan:
-      fmt.Println("received a message:", log)
-      fmt.Println("buffer size:", len(b.buffer))
       b.bufferMu.Lock()
-      b.buffer = append(b.buffer,log)
+      b.buffer = append(b.buffer, log)
       if len(b.buffer)>= b.batchSize{
       //flush logs 
-        fmt.Println("flusing all logs")
         b.flush()
       }
       b.bufferMu.Unlock()
     case <-ticker.C:
-      fmt.Println("buffer expired")
       b.bufferMu.Lock()
       if len(b.buffer) > 0 {
         //flush
         b.flush()
       }
+    b.bufferMu.Unlock()
     case <-b.done:
-      fmt.Println("done called")
       b.bufferMu.Lock()
       if len(b.buffer) > 0{
         b.flush()
       }
-    b.bufferMu.Unlock()
-    return;
+      b.bufferMu.Unlock()
+      return;
     }
   }
 }
@@ -124,7 +114,6 @@ func (b *batchProcess) flush(){
     return 
   }
   for _,v := range b.buffer{
-    fmt.Println("topic name:", b.topicName)
     b.producer.Produce(&kafka.Message{
     TopicPartition: kafka.TopicPartition{Topic: &b.topicName, Partition: kafka.PartitionAny},
     Value:v,
