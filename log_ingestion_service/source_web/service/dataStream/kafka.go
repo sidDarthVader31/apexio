@@ -28,6 +28,13 @@ func (k *KafkaService) Connect(ctx context.Context, confi map[string]string) err
   kafkaConnector, err := kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"localhost:9092",
     "client.id":"logProducer",
     "acks":"all",
+    "compression":"snappy",
+    "retries": 5,
+    "retries.backoff.ms": 100,
+    "enable.idempotence": true,
+    "message.send.max.retries": 5,
+    "delivery.timeout.ms": 100000,
+    "linger.ms":5,
   })
   if err!=nil{
     fmt.Printf("error connecting to kafka %v, shutting down the server", err)
@@ -36,6 +43,7 @@ func (k *KafkaService) Connect(ctx context.Context, confi map[string]string) err
   }
   fmt.Println("connected to kafka ")
   k.kafkaProducer = kafkaConnector
+  k.Close()
   return nil;
 }
 
@@ -53,4 +61,5 @@ func (k *KafkaService) ProduceMessage(ctx context.Context, message []byte, topic
 
 func (k KafkaService) Close(){
  //close connection 
+  defer k.kafkaProducer.Close()
 }
