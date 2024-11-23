@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sourceweb/config"
 	datastream "sourceweb/service/dataStream"
 
 	"github.com/gin-gonic/gin"
@@ -18,13 +19,17 @@ func main(){
       "message": "health check passed",
     })
   })
+  envError := config.InitEnv()
+  if envError!=nil{
+    os.Exit(1)
+  }
   initRoutes(Routev1)
-  DataStreamService, dataStreamError := datastream.CreateDataStream("KAFKA", map[string]string{"baseurl":"http://localhost:9092"})
+  DataStreamService, dataStreamError := datastream.CreateDataStream(config.Config.MESSAGE_BROKER, map[string]string{"baseurl":config.Config.KAFKA_HOST})
   DataStreamService.Connect(context.Background(), map[string]string{})
 
   if dataStreamError!=nil{
     fmt.Println("error connecting to kafka:", dataStreamError)
     os.Exit(1)
   }
-  r.Run()
+  r.Run(fmt.Sprintf(":%s", config.Config.PORT))
 }
