@@ -29,7 +29,7 @@ func NewKafkaService(config map[string]string) (*KafkaService, error) {
 	return &KafkaService{config: config}, nil
 }
 
-func (k *KafkaService) Connect(ctx context.Context, confi map[string]string) error {
+func (k *KafkaService) Connect(ctx context.Context, config map[string]string) error {
 	// Kafka connection logic
   kafkaConnector, err := kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"localhost:9092",
     "client.id":"logProducer",
@@ -119,5 +119,5 @@ func (b *batchProcess) flush(){
     Value:v,
   }, nil)
   }
-  b.buffer = make([][]byte, 0)
+  b.buffer = make([][]byte, b.batchSize)
 }
