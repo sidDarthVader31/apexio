@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log-processor/config"
+	"log-processor/constants"
+	ds "log-processor/datastore"
+	datastream "log-processor/service/dataStream"
 	"os"
+
 	"github.com/gin-gonic/gin"
-  ds "log-processor/datastore"
 )
 
 var Routev1 *gin.RouterGroup;
@@ -17,13 +22,15 @@ func main(){
       "message": "health check passed",
     })
   })
-  _,err := connectKafka()
-  if err!=nil{
-    fmt.Println("error connecting to kafka")
+  config.InitEnv()
+  DataStreamService, errorData := datastream.CreateDataStream(context.Background(),make(map[string]string), config.Config.MESSAGE_BROKER)
+  if errorData != nil{
+    fmt.Println("error connecting to message broker, shutting down")
     os.Exit(1)
   }
+  DataStreamService.Connect(context.Background(), make(map[string]string))
   ds.ConnectToElastic()
-  getLogs()
-  fmt.Println("go consumer running")
+  DataStreamService.Consume(context.Background(), constants.LogTopic)
+  fmt.Println("kafka consumer running")
   r.Run()
 }
