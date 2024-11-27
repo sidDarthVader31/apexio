@@ -58,7 +58,7 @@ func (k *KafkaStream) Consume(context context.Context, topics []string){
       logData.Insert()
     case kafka.Error:
       fmt.Fprintf(os.Stderr, "%% Error: %v\n", e)
-    run = false
+      run = false
     }
   }
 }

@@ -23,6 +23,7 @@ func main(){
     })
   })
   config.InitEnv()
+  fmt.Println("message broker:", config.Config.MESSAGE_BROKER)
   DataStreamService, errorData := datastream.CreateDataStream(context.Background(),make(map[string]string), config.Config.MESSAGE_BROKER)
   if errorData != nil{
     fmt.Println("error connecting to message broker, shutting down")
@@ -32,5 +33,5 @@ func main(){
   ds.ConnectToElastic()
   DataStreamService.Consume(context.Background(), constants.LogTopic)
   fmt.Println("kafka consumer running")
-  r.Run()
+  r.Run(fmt.Sprintf(":%s", config.Config.PORT))
 }

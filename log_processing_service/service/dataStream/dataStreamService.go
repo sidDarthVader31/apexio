@@ -3,6 +3,7 @@ package datastream
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -44,8 +45,10 @@ func CreateDataStream(context  context.Context, configMap map[string]string, ser
 
   switch (serviceName){
   case "KAFKA":
+    fmt.Println("getting kafka service")
     service, err := getNewkafkaStream(configMap)
     if err != nil {
+      fmt.Println("error while getting kafka service:", err)
       return nil, err
     }
     StreamService.service = service
