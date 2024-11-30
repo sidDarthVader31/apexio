@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"log-processor/datastore"
+
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
@@ -132,11 +134,11 @@ const (
 	LogLevelError   LogLevel = "ERROR"
 	LogLevelFatal   LogLevel = "FATAL"
 )
-func (l *LogInfo) Insert(){
+func (l *LogInfo) Insert() error{
   data, e := json.Marshal(l)
 
   if e!= nil{
-    fmt.Println("error while converting to json:", e)
+    return e
   }
   req := esapi.IndexRequest{
 		Index:      "raw_logs", // Index name
@@ -145,14 +147,15 @@ func (l *LogInfo) Insert(){
 	}
   res, err := req.Do(context.Background(), datastore.Es)
   if err != nil {
-		log.Fatalf("Error indexing document: %s", err)
+    return err
 	}
 	defer res.Body.Close()
 	// Check if the response is successful
 	if res.IsError() {
-		log.Printf("Error indexing document: %s", res.String())
+    return errors.New(res.String())
 	} else {
 		fmt.Printf("Document indexed successfully: %s\n", res.String())
 	}
+  return nil
 }
 
