@@ -36,7 +36,11 @@ type ConsumerConfig struct{
 
 
 func getNewkafkaStream(configMap map[string]string) (*KafkaStream, error){
-  return &KafkaStream{configMap: configMap}, nil
+  return &KafkaStream{configMap: configMap,
+    maxRetries: 5,
+    workers: 5,
+    retryBackoff: time.Second,
+  }, nil
 }
 
 func (k *KafkaStream) Connect(context context.Context, config map[string]string) error{
@@ -55,6 +59,7 @@ func (k *KafkaStream) Connect(context context.Context, config map[string]string)
 
 func (k *KafkaStream) Consume(context context.Context, topics []string){
   err := k.Consumer.SubscribeTopics(topics, nil)
+  k.topics = topics
   if err != nil{
     fmt.Println("issue with connecting to kafka:",err)
     os.Exit(1)
@@ -105,7 +110,7 @@ func (k * KafkaStream) processMessageWithRetry(msg *kafka.Message) error {
   for attempt :=0 ; attempt < k.maxRetries; attempt++{
     error = k.processMessage(msg)
     if error != nil {
-      return nil 
+     return nil 
     }
     if attempt < k.maxRetries {
       time.Sleep(k.retryBackoff)
