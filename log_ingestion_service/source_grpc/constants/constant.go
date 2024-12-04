@@ -1,5 +1,4 @@
 package constants
-
 import "time"
 const LogTopic = "logs.ingestion.raw.v1"
 const BufferLength = 1000000

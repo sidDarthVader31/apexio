@@ -63,21 +63,16 @@ func (k *KafkaService) Connect(context context.Context, config map[string]string
 func (k *KafkaService)ProduceMessage(context context.Context, message []byte, topicName string) (bool, error){
   k.batchProcess.topicName = topicName
   select{
-  case  k.batchProcess.logChan <- message :
-  return true,nil
-  default:
-    return false, errors.New("log channel is full")
+    case  k.batchProcess.logChan <- message :
+      return true,nil
+    default:
+      return false, errors.New("log channel is full")
   }
 }
 
 func (k *KafkaService)Close(){
-
+  k.batchProcess.producer.Close()
 }
-
-
-
-
-
 //------------------------- batchProcess functions
 //---------------
 
@@ -129,6 +124,4 @@ func (b *batchProcess) flush(){
   }
   b.buffer = make([][]byte, b.batchSize)
 }
-
-
 

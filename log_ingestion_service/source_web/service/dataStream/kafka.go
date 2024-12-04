@@ -25,6 +25,7 @@ type batchProcess struct {
   logChan chan []byte
   topicName string
 }
+
 func NewKafkaService(config map[string]string) (*KafkaService, error) {
 	return &KafkaService{config: config}, nil
 }
@@ -39,6 +40,7 @@ func (k *KafkaService) Connect(ctx context.Context, config map[string]string) er
     "delivery.timeout.ms": 100000,
     "linger.ms":5,
   })
+
   if err!=nil{
     fmt.Printf("error connecting to kafka %v, shutting down the server", err)
     k.batchProcess= batchProcess{}
@@ -71,6 +73,7 @@ func (k *KafkaService) ProduceMessage(ctx context.Context, message []byte, topic
 }
 
 func (k *KafkaService) Close(){
+  k.batchProcess.producer.Close()
 }
 
 func(b * batchProcess) processLogs(){
@@ -117,7 +120,7 @@ func (b *batchProcess) flush(){
     b.producer.Produce(&kafka.Message{
     TopicPartition: kafka.TopicPartition{Topic: &b.topicName, Partition: kafka.PartitionAny},
     Value:v,
-  }, nil)
+    }, nil)
   }
   b.buffer = make([][]byte, b.batchSize)
 }

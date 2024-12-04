@@ -21,8 +21,8 @@ var (
     once          sync.Once // Ensure initialization is thread-safe
 )
 
-
-
+// ----------------------------- factory to create data
+// stream ---------------------
 func CreateDataStream(provider string, config map[string]string) (*DataStreamService, error) {
 	var service DataStreamServiceInterface
    once.Do(func() {
@@ -45,6 +45,7 @@ func CreateDataStream(provider string, config map[string]string) (*DataStreamSer
 	return StreamService, err 
 }
 
+// ------------- data stream service methods
 func(ds *DataStreamService) Connect(ctx context.Context, config map[string]string) (error){
   return ds.service.Connect(ctx, config)
 }

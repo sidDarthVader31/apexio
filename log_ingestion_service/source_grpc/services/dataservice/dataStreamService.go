@@ -21,7 +21,7 @@ type DataStreamService struct{
 }
 
 
-
+// data stream service methods
 func (d *DataStreamService) Connect(context context.Context, config map[string]string) error{
   return d.service.Connect(context, config)
 }
@@ -56,7 +56,7 @@ func GetDataStreamService(messaseService string, config map[string]string) (*Dat
   switch(messaseService){
   case "KAFKA":
     service, err = getNewkafkaService(config)
-  if err!=nil{
+    if err!=nil{
       return nil, err
     }
     StreamService.service = service

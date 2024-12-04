@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	port = flag.Int("port", 50051, "The server port")
+	port = flag.Int("port",  config.Config.PORT, "The server port")
 ) 
 
 var DataStreamService *dataservice.DataStreamService;
@@ -33,7 +33,6 @@ type logServer struct {
     return nil, err
   }
   DataStreamService.ProduceMessage(context.Background(), value, constants.LogTopic)
-  // ingestToKafka(value, logTopic);
   res := LogResponse{
     Message: "log ingested successfully",
     Success: true,
