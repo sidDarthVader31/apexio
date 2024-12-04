@@ -5,7 +5,6 @@ const axios = require('axios')
 
 const requestMethod = ['POST','GET','PUT','DELETE']
 const logLevel = ['INFO','ERROR','WARN','FATAL','DEBUG','UNSPECIFIED']
-const messages = ['user created successfully', 'cannot read properties of undefined', 'get users successfully', '']
 const environment = ['production', 'dev','qa', 'release' ,'perf', 'staging']
   const data = {
     "id": Math.random(),
@@ -25,12 +24,6 @@ const environment = ['production', 'dev','qa', 'release' ,'perf', 'staging']
       "environment": "production"
     }
   }
- const statusGroups = [
-      [200, 201, 204],   // 2xx
-      [301, 302, 304],   // 3xx
-      [400, 401, 403, 404], // 4xx
-      [500, 502, 503, 504] // 5xx
-    ];
  const generateResponseStatus = () => {
     const statusGroups = [
       [200, 201, 204, 209],   // 2xx
