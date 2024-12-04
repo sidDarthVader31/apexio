@@ -66,7 +66,7 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
   k.topics = topics
 
   // setup signal handling for graceful shutdown
-  sigChan := make(chan os.Signal, 1)
+  sigChan := make(chan os.Signal, k.workers)
   signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
   messageChan := make(chan *kafka.Message, k.workers)
 
@@ -124,7 +124,7 @@ func (k * KafkaStream) processMessageWithRetry(msg *kafka.Message) error {
   for attempt :=0 ; attempt < k.maxRetries; attempt++{
     error = k.processMessage(msg)
     if error != nil {
-     return nil 
+     return error 
     }
     if attempt < k.maxRetries {
       time.Sleep(k.retryBackoff)
