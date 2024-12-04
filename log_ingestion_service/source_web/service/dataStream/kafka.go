@@ -32,7 +32,7 @@ func NewKafkaService(config map[string]string) (*KafkaService, error) {
 
 func (k *KafkaService) Connect(ctx context.Context, config map[string]string) error {
 	// Kafka connection logic
-  kafkaConnector, err := kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"localhost:9092",
+  kafkaConnector, err := kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"kafka-service",
     "client.id":"logProducer",
     "acks":"all",
     "retries": 5,

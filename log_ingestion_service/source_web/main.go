@@ -25,7 +25,11 @@ func main(){
   }
   initRoutes(Routev1)
   DataStreamService, dataStreamError := datastream.CreateDataStream(config.Config.MESSAGE_BROKER, map[string]string{"baseurl":config.Config.KAFKA_HOST})
-  DataStreamService.Connect(context.Background(), map[string]string{})
+  connectErr := DataStreamService.Connect(context.Background(), map[string]string{})
+  if connectErr !=nil{
+    fmt.Println("error connecting to kafka", connectErr)
+    os.Exit(1)
+  }
 
   if dataStreamError!=nil{
     fmt.Println("error connecting to kafka:", dataStreamError)

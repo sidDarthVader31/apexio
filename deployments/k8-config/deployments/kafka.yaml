@@ -17,20 +17,20 @@ spec:
     spec:
       containers:
       - name: kafka
-        image: kafka:3.9.0
+        image: apache/kafka:3.9.0
         ports:
         - containerPort: 9092
-        env:
-          - name: KAFKA_USER
-            valueFrom:
-              secretKeyRef:
-                name: kafka-secret
-                key: USER
-          - name: KAFKA_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: kafka-secret
-                key: PASSWORD
+        # env:
+        #   - name: KAFKA_USER
+        #     valueFrom:
+        #       secretKeyRef:
+        #         name: kafka-secret
+        #         key: USER
+        #   - name: KAFKA_PASSWORD
+        #     valueFrom:
+        #       secretKeyRef:
+        #         name: kafka-secret
+        #         key: PASSWORD
 ---
 
 apiVersion: v1
