@@ -42,7 +42,7 @@ func getNewkafkaStream(configMap map[string]string) (*KafkaStream, error){
   }, nil
 }
 
-func (k *KafkaStream) Connect(context context.Context, config map[string]string) error{
+func (k *KafkaStream) Connect(ctx context.Context, config map[string]string) error{
   KafkaConnector,err := kafka.NewConsumer(&kafka.ConfigMap{
     "bootstrap.servers":    "localhost:9092",
      "group.id":             "foo",
@@ -57,36 +57,38 @@ func (k *KafkaStream) Connect(context context.Context, config map[string]string)
   return nil
 }
 
-func (k *KafkaStream) Consume(context context.Context, topics []string){
-  fmt.Println("topic names:inside kafkaL::", topics)
-  fmt.Println("topic addres::", &topics)
+func (k *KafkaStream) Consume(ctx context.Context, topics []string){
   err := k.Consumer.SubscribeTopics([]string {"logs.ingestion.raw.v1"}, nil)
   if err != nil{
     fmt.Println("issue subsribing to kafka topics:",err)
     os.Exit(1)
   }
   k.topics = topics
-  fmt.Println("subscribed to :", topics)
 
   // setup signal handling for graceful shutdown
   sigChan := make(chan os.Signal, 1)
   signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
   messageChan := make(chan *kafka.Message, k.workers)
 
-  fmt.Println("message chan:", messageChan)
   var wg sync.WaitGroup
 
-  fmt.Println("worker count:", k.workers)
+     consumeCtx, cancel := context.WithCancel(ctx) 
+    defer cancel()
   for i := 0; i< k.workers; i++{
     wg.Add(1)
     go k.messageWorker(messageChan, &wg)
   }
-  
+ // Goroutine to handle signals
+    go func() {
+        <-sigChan
+        fmt.Println("Received interrupt signal, shutting down...")
+        cancel() // Cancel the context to stop consuming
+    }() 
   for {
     select {
-    case <- context.Done():
+    case <- consumeCtx.Done():
     close(messageChan)
-    wg.Wait()
+    wg.Done()
     return 
     default: 
     msg, err := k.Consumer.ReadMessage(time.Second)
@@ -94,7 +96,13 @@ func (k *KafkaStream) Consume(context context.Context, topics []string){
         fmt.Println("error reading message:", err)
         continue
       }
-      messageChan <- msg
+    select {
+      case messageChan<- msg:
+      case <- consumeCtx.Done():
+      close(messageChan)
+      wg.Wait()
+      return
+      }
     }
   }
 }
@@ -106,7 +114,7 @@ func (k * KafkaStream) messageWorker(messageChan <- chan *kafka.Message, wg *syn
   for msg := range(messageChan){
     err := k.processMessageWithRetry(msg)
     if err !=nil{
-      fmt.Printf("failed to process message after all retries:", err)
+      fmt.Printf("failed to process message after all retries:%v", err)
     }
   }
 }
