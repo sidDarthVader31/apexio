@@ -1,0 +1,37 @@
+#deployment and service for sourceweb
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: source_web-deployment 
+  labels:
+    app: source_web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: source_web 
+  template:
+    metadata:
+      labels:
+        app: source_web
+    spec:
+      containers:
+        - name: source_web
+          image: source_web:1.0
+          ports:
+            - containerPort: 3001
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: source_web
+spec:
+  type: NodePort
+  selector:
+    app: source_web
+  ports:
+    - protocol: TCP
+      port: 3001 # port exposed within the cluster
+      targetPort: 3001 #the port in the go app containers 
+      nodePort: 30010 #for external access

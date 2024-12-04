@@ -29,7 +29,11 @@ func main(){
     fmt.Println("error connecting to message broker, shutting down")
     os.Exit(1)
   }
-  DataStreamService.Connect(context.Background(), make(map[string]string))
+  err := DataStreamService.Connect(context.Background(), make(map[string]string))
+  if err != nil{
+    fmt.Println("errow connecting to data stream,::", err)
+    os.Exit(1)
+  }
   ds.ConnectToElastic()
   DataStreamService.Consume(context.Background(), constants.LogTopic)
   fmt.Println("kafka consumer running")

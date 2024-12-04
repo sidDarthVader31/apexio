@@ -1,4 +1,5 @@
 package logDistributor
+
 type LogInfo struct {
 	Id        uint                    `json:"id"`
 	Metadata  Metadata                `json:"metadata"` 
@@ -26,8 +27,10 @@ type Source struct{
   Environment string                `json:"environment"` 
   Extra map[string] string          `json:"extra"` 
 }
+
 type LogLevel string
 // Constants for LogLevel
+
 const (
 	LogLevelDebug   LogLevel = "DEBUG"
 	LogLevelInfo    LogLevel = "INFO"

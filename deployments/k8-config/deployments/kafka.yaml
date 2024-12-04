@@ -1,0 +1,47 @@
+#deployment and service for kafka 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-deployment
+  labels:
+  app: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: kafka:3.9.0
+          ports:
+            - containerPort:9092
+          env:
+            - name: KAFKA_USER
+              valueFrom:
+                secretKeyRef: kafka-secret
+                key: USER
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretkeyRef: kafka-secret
+                key: PASSWORD
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+spec:
+  selector:
+   app: kafka
+  ports:
+    - protocol: TCP
+      port: 9092 #port that is exposed
+      targetPort: 9092
+

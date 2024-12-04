@@ -2,12 +2,8 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/spf13/viper"
 )
-
-
-
 
 type IConfig struct{
   KAFKA_HOST string
@@ -18,6 +14,7 @@ type IConfig struct{
 }
 
 var Config IConfig
+
 func InitEnv() error{
   viper.SetConfigFile(".env")
   err := viper.ReadInConfig()

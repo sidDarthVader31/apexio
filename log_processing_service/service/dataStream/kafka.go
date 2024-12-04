@@ -10,7 +10,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -78,31 +77,32 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
     wg.Add(1)
     go k.messageWorker(messageChan, &wg)
   }
- // Goroutine to handle signals
-    go func() {
-        <-sigChan
-        fmt.Println("Received interrupt signal, shutting down...")
-        cancel() // Cancel the context to stop consuming
-    }() 
+  // Goroutine to handle signals
+  go func() {
+       <-sigChan
+       fmt.Println("Received interrupt signal, shutting down...")
+       cancel() // Cancel the context to stop consuming
+  }() 
+  
   for {
     select {
-    case <- consumeCtx.Done():
-    close(messageChan)
-    wg.Done()
-    return 
-    default: 
-    msg, err := k.Consumer.ReadMessage(time.Second)
-    if err!=nil{
-        fmt.Println("error reading message:", err)
-        continue
-      }
-    select {
-      case messageChan<- msg:
       case <- consumeCtx.Done():
       close(messageChan)
-      wg.Wait()
-      return
-      }
+      wg.Done()
+      return 
+    default: 
+      msg, err := k.Consumer.ReadMessage(time.Second)
+      if err!=nil{
+          fmt.Println("error reading message:", err)
+          continue
+        }
+      select {
+        case messageChan<- msg:
+        case <- consumeCtx.Done():
+          close(messageChan)
+          wg.Wait()
+          return
+        }
     }
   }
 }

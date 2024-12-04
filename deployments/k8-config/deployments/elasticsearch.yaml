@@ -1,0 +1,47 @@
+#deployment and service for elasticsearch
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-deployment
+  labels:
+    app: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - name: elasticsearch
+        image: elasticsearch:8.16.0
+        ports:
+        - containerPort: 9200
+        env:
+         - name: USER
+           valueFrom:
+             secretKeyRef:
+               name: elasticsearch-secret
+               key: USER
+         - name: PASSWORD
+           valueFrom: 
+             secretKeyRef: 
+               name: elasticsearch-secret
+               key: PASSWORD
+
+
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-service
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200

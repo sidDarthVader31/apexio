@@ -31,5 +31,6 @@ func main(){
     fmt.Println("error connecting to kafka:", dataStreamError)
     os.Exit(1)
   }
+
   r.Run(fmt.Sprintf(":%s", config.Config.PORT))
 }
