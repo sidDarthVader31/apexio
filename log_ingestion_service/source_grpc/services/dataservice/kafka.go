@@ -11,10 +11,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-
-
-
-
 type KafkaService struct{
   config map[string]string
   batchProcess batchProcess
