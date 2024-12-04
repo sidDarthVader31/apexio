@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"log-processor/datastore"
 
 	"github.com/elastic/go-elasticsearch/v8/esapi"

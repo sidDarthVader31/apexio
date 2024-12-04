@@ -3,7 +3,6 @@ package datastream
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log-processor/datastore/models"
 	"os"
@@ -47,31 +46,37 @@ func (k *KafkaStream) Connect(context context.Context, config map[string]string)
   KafkaConnector,err := kafka.NewConsumer(&kafka.ConfigMap{
     "bootstrap.servers":    "localhost:9092",
      "group.id":             "foo",
-     "auto.offs<et.reset":    "smallest",
+     "auto.offset.reset":    "smallest",
   })
   if err != nil {
     fmt.Println("issue while connecting to kafka", err)
     return err
   }
+  fmt.Println("connected to kafka:", KafkaConnector)
   k.Consumer = KafkaConnector
   return nil
 }
 
 func (k *KafkaStream) Consume(context context.Context, topics []string){
-  err := k.Consumer.SubscribeTopics(topics, nil)
-  k.topics = topics
+  fmt.Println("topic names:inside kafkaL::", topics)
+  fmt.Println("topic addres::", &topics)
+  err := k.Consumer.SubscribeTopics([]string {"logs.ingestion.raw.v1"}, nil)
   if err != nil{
-    fmt.Println("issue with connecting to kafka:",err)
+    fmt.Println("issue subsribing to kafka topics:",err)
     os.Exit(1)
   }
+  k.topics = topics
+  fmt.Println("subscribed to :", topics)
 
   // setup signal handling for graceful shutdown
   sigChan := make(chan os.Signal, 1)
   signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
   messageChan := make(chan *kafka.Message, k.workers)
 
+  fmt.Println("message chan:", messageChan)
   var wg sync.WaitGroup
 
+  fmt.Println("worker count:", k.workers)
   for i := 0; i< k.workers; i++{
     wg.Add(1)
     go k.messageWorker(messageChan, &wg)
@@ -79,14 +84,15 @@ func (k *KafkaStream) Consume(context context.Context, topics []string){
   
   for {
     select {
-
     case <- context.Done():
     close(messageChan)
     wg.Wait()
+    return 
     default: 
-    msg, err := k.Consumer.ReadMessage(100 * time.Millisecond)
+    msg, err := k.Consumer.ReadMessage(time.Second)
     if err!=nil{
         fmt.Println("error reading message:", err)
+        continue
       }
       messageChan <- msg
     }
@@ -122,6 +128,7 @@ func (k * KafkaStream) processMessageWithRetry(msg *kafka.Message) error {
 
 func(k *KafkaStream)processMessage(msg *kafka.Message) error{
   var logData models.LogInfo
+  fmt.Println("msg::::", msg)
   err := json.Unmarshal(msg.Value, &logData)
   if err != nil {
     return err
