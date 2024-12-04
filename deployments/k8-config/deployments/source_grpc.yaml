@@ -1,0 +1,37 @@
+#deployment and service for source_grpc
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: source_grpc-deployment 
+  labels:
+    app: source_grpc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: source_grpc
+  template:
+    metadata:
+      labels:
+        app: source_grpc
+    spec:
+      containers:
+        - name: source_grpc
+          image: source_grpc:1.0
+          ports:
+            - containerPort: 3002
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: source_grpc-service 
+spec:
+  type: NodePort
+  selector:
+    app: source_grpc
+  ports:
+    - protocol: TCP
+      port: 3002 # port that is exposed within the cluster 
+      targetPort: 3002 #port in the go app container 
+      nodePort: 30020 #port exposed for external access
