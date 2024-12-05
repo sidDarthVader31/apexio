@@ -20,17 +20,12 @@ spec:
         image: apache/kafka:3.9.0
         ports:
         - containerPort: 9092
-        # env:
-        #   - name: KAFKA_USER
-        #     valueFrom:
-        #       secretKeyRef:
-        #         name: kafka-secret
-        #         key: USER
-        #   - name: KAFKA_PASSWORD
-        #     valueFrom:
-        #       secretKeyRef:
-        #         name: kafka-secret
-        #         key: PASSWORD
+        env:
+          - name: KAFKA_ZOOKEEPER_CONNECT
+            value: "zookeeper-service:2181"
+        env:
+          - name: RAFT_ENABLED
+            value: "true"
 ---
 
 apiVersion: v1
