@@ -28,7 +28,7 @@ spec:
         - name: KAFKA_LISTENERS
           value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093"
         - name: KAFKA_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://localhost:9092"
+          value: "PLAINTEXT://kafka-service:9092"
         - name: KAFKA_CONTROLLER_LISTENER_NAMES
           value: 'CONTROLLER'
         - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
@@ -37,16 +37,6 @@ spec:
           value: "1@localhost:9093"
         - name: CLUSTER_ID
           value: "ciMnjmfYTLiU2zFoMjNrHA"
-        readinessProbe:
-          tcpSocket:
-            port: 9092
-          initialDelaySeconds: 15
-          periodSeconds: 10
-        livenessProbe:
-          tcpSocket:
-            port: 9092
-          initialDelaySeconds: 30
-          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -55,8 +45,8 @@ metadata:
 spec:
   selector:
     app: kafka
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 9092
       targetPort: 9092
-  clusterIP: None  # Headless service

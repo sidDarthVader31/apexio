@@ -43,7 +43,7 @@ func getNewkafkaStream(configMap map[string]string) (*KafkaStream, error){
 
 func (k *KafkaStream) Connect(ctx context.Context, config map[string]string) error{
   KafkaConnector,err := kafka.NewConsumer(&kafka.ConfigMap{
-    "bootstrap.servers":    "localhost:9092",
+    "bootstrap.servers":    "kafka-service",
      "group.id":             "foo",
      "auto.offset.reset":    "smallest",
   })

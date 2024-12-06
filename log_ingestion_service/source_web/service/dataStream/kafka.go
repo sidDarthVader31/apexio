@@ -39,14 +39,16 @@ func (k *KafkaService) Connect(ctx context.Context, config map[string]string) er
     "message.send.max.retries": 5,
     "delivery.timeout.ms": 100000,
     "linger.ms":5,
+    "log_level": 7,
   })
 
   if err!=nil{
-    fmt.Printf("error connecting to kafka %v, shutting down the server", err)
+    fmt.Printf("error connecting to kafka %v, shutting down the server\n", err)
     k.batchProcess= batchProcess{}
     return err
+  } else{
+  fmt.Println("connected to kafka ", kafkaConnector)
   }
-  fmt.Println("connected to kafka ")
 
   //create a batchprocessor
   k.batchProcess = batchProcess{
@@ -57,7 +59,7 @@ func (k *KafkaService) Connect(ctx context.Context, config map[string]string) er
     logChan : make(chan []byte, constants.BatchSize*2), // buffer channel to handle spike in traffic 
     done: make(chan struct{}),
   }
-  go k.batchProcess.processLogs() 
+  go k.batchProcess.processLogs()
   return nil;
 }
 
@@ -117,10 +119,16 @@ func (b *batchProcess) flush(){
     return 
   }
   for _,v := range b.buffer{
-    b.producer.Produce(&kafka.Message{
+    if v == nil{
+      continue
+    }
+     err := b.producer.Produce(&kafka.Message{
     TopicPartition: kafka.TopicPartition{Topic: &b.topicName, Partition: kafka.PartitionAny},
     Value:v,
     }, nil)
+    if err !=nil{
+      fmt.Println("error producing message to kafka:", err)
+    }
   }
-  b.buffer = make([][]byte, b.batchSize)
+  b.buffer = [][]byte{}
 }

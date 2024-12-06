@@ -4,6 +4,7 @@ WORKDIR /app
 COPY go.mod go.sum ./ 
 RUN go mod download
 COPY . .
+COPY .env .
 RUN  GOOS=linux go build -o /source_web 
 EXPOSE 3001
 CMD ["/source_web"]
