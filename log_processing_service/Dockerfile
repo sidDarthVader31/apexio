@@ -1,9 +1,9 @@
 #dockerfile for go api
-FROM golang:1.21 
+FROM golang:1.23.2 
 WORKDIR /app
 COPY go.mod go.sum ./ 
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-gs-ping
-EXPOSE 3000
-CMD ["/docker-gs-ping"]
+RUN GOOS=linux go build -o /log_processing_service  
+EXPOSE 3003
+CMD ["/log_processing_service"]

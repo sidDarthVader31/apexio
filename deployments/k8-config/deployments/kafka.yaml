@@ -1,10 +1,10 @@
-#deployment and service for kafka 
+#deployment and service for kafka
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-deployment
   labels:
-  app: kafka
+    app: kafka
 spec:
   replicas: 1
   selector:
@@ -16,32 +16,37 @@ spec:
         app: kafka
     spec:
       containers:
-        - name: kafka
-          image: kafka:3.9.0
-          ports:
-            - containerPort:9092
-          env:
-            - name: KAFKA_USER
-              valueFrom:
-                secretKeyRef: kafka-secret
-                key: USER
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretkeyRef: kafka-secret
-                key: PASSWORD
-
-
+      - name: kafka
+        image: apache/kafka:3.9.0
+        ports:
+        - containerPort: 9092
+        env:
+        - name: KAFKA_NODE_ID
+          value: "1"
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://kafka-service:9092"
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: 'CONTROLLER'
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "PLAINTEXT:PLAINTEXT, CONTROLLER: PLAINTEXT"
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "1@localhost:9093"
+        - name: CLUSTER_ID
+          value: "ciMnjmfYTLiU2zFoMjNrHA"
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
   name: kafka-service
 spec:
   selector:
-   app: kafka
+    app: kafka
+  type: ClusterIP
   ports:
     - protocol: TCP
-      port: 9092 #port that is exposed
+      port: 9092
       targetPort: 9092
-
