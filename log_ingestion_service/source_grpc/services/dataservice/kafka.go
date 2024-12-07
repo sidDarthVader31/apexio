@@ -140,6 +140,8 @@ func (b *batchProcess) flush(topic string){
     if v == nil{
       continue
     }
+    fmt.Println("sending message to topic:",topic)
+    fmt.Println("value:", len(v))
     err := b.producer.Produce(&kafka.Message{
       TopicPartition: kafka.TopicPartition{
         Topic: &topic,

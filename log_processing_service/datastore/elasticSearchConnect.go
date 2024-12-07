@@ -2,6 +2,8 @@ package datastore
 
 import (
 	"fmt"
+	"log-processor/config"
+
 	"github.com/elastic/go-elasticsearch/v8"
 )
 var Es *elasticsearch.Client
@@ -9,10 +11,10 @@ var err error
 func ConnectToElastic() (*elasticsearch.Client, error){
   cfg := elasticsearch.Config{
     Addresses: []string{
-      "http://localhost:9200",
+      config.Config.ELASTIC_HOST,
     },
-    Username: "elastic",
-    Password: "v9e95jhUulIPWCKMsmBn",
+    Username: config.Config.ELASTIC_USER,
+    Password: config.Config.ELASTIC_PASSWORD,
   }
   Es, err = elasticsearch.NewClient(cfg);
   if err != nil {

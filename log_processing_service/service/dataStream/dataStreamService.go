@@ -10,8 +10,7 @@ import (
 
 
 type IDataStream interface{
-
-  Connect(context context.Context, config map[string]string) error
+  Connect(context context.Context) error
   Consume(context context.Context, topics []string) 
   Close()
 }
@@ -21,8 +20,8 @@ type DataStreamService struct {
 }
 
 
-func (d *DataStreamService) Connect(context context.Context, config map[string]string) error{
-  return d.service.Connect(context, config)
+func (d *DataStreamService) Connect(context context.Context) error{
+  return d.service.Connect(context)
 }
 
 func (d *DataStreamService) Consume(context context.Context, topicNames []string) {
@@ -38,7 +37,7 @@ var (
     once          sync.Once // Ensure initialization is thread-safe
 )
 
-func CreateDataStream(context  context.Context, configMap map[string]string, serviceName string) (*DataStreamService, error){
+func CreateDataStream(context  context.Context, serviceName string) (*DataStreamService, error){
    once.Do(func() {
         StreamService = &DataStreamService{}
     })
@@ -46,7 +45,7 @@ func CreateDataStream(context  context.Context, configMap map[string]string, ser
   switch (serviceName){
   case "KAFKA":
     fmt.Println("getting kafka service")
-    service, err := getNewkafkaStream(configMap)
+    service, err := getNewkafkaStream()
     if err != nil {
       fmt.Println("error while getting kafka service:", err)
       return nil, err

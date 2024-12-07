@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log-processor/config"
 	"log-processor/datastore/models"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type KafkaStream struct{
   Consumer *kafka.Consumer
-  configMap map[string]string
   topics []string
   workers int
   maxRetries int
@@ -33,19 +34,19 @@ type ConsumerConfig struct{
 }
 
 
-func getNewkafkaStream(configMap map[string]string) (*KafkaStream, error){
-  return &KafkaStream{configMap: configMap,
-    maxRetries: 5,
-    workers: 5,
+func getNewkafkaStream() (*KafkaStream, error){
+  return &KafkaStream{
+    maxRetries: config.Config.KAFKA_MAX_RETRIES,
+    workers: config.Config.KAFKA_WORKERS,
     retryBackoff: time.Second,
   }, nil
 }
 
-func (k *KafkaStream) Connect(ctx context.Context, config map[string]string) error{
+func (k *KafkaStream) Connect(ctx context.Context) error{
   KafkaConnector,err := kafka.NewConsumer(&kafka.ConfigMap{
-    "bootstrap.servers":    "kafka-service",
-     "group.id":             "foo",
-     "auto.offset.reset":    "smallest",
+    "bootstrap.servers":    config.Config.KAFKA_HOST,
+     "group.id":            config.Config.KAFKA_GROUP_ID,
+     "auto.offset.reset":    config.Config.KAFKA_OFFSET_RESET,
   })
   if err != nil {
     fmt.Println("issue while connecting to kafka", err)
@@ -62,7 +63,9 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
     fmt.Println("issue subsribing to kafka topics:",err)
     os.Exit(1)
   }
+  fmt.Println("subscripbed to topic:", err)
   k.topics = topics
+  fmt.Println("topics:", k.topics)
 
   // setup signal handling for graceful shutdown
   sigChan := make(chan os.Signal, k.workers)
@@ -70,9 +73,8 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
   messageChan := make(chan *kafka.Message, k.workers)
 
   var wg sync.WaitGroup
-
-     consumeCtx, cancel := context.WithCancel(ctx) 
-    defer cancel()
+  consumeCtx, cancel := context.WithCancel(ctx) 
+  defer cancel()
   for i := 0; i< k.workers; i++{
     wg.Add(1)
     go k.messageWorker(messageChan, &wg)

@@ -35,6 +35,7 @@ func NewKafkaService() (*KafkaService, error) {
 }
 
 func (k *KafkaService) Connect(ctx context.Context) error {
+  fmt.Println("kafka config:",getKafkaConfig() )
 	// Kafka connection logic
   kafkaConnector, err := kafka.NewProducer(getKafkaConfig())
 
@@ -92,8 +93,9 @@ func(b * batchProcess) processLogs(){
         b.buffer = make(map[string][][]byte)
       }
       b.buffer[log.topicName] = append(b.buffer[log.topicName], log.message)
+      
       // Check if any topic's buffer is full
-      for topic, msgs := range b.buffer {
+      for topic, msgs :=range b.buffer {
         if len(msgs) >= b.batchSize {
           b.flush(topic)
         }
