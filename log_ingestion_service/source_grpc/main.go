@@ -28,14 +28,7 @@ type logServer struct {
   if err != nil {
     return nil, err
   }
-   _, err = DataStreamService.ProduceMessage(context.Background(), value, constants.LogTopic)
-  if err != nil {
-    res := LogResponse{
-      Message: "error ingesting log",
-      Success: false,
-    }
-    return &res, nil
-  }
+  DataStreamService.ProduceMessage(context.Background(), value, constants.LogTopic)
   res := LogResponse{
     Message: "log ingested successfully",
     Success: true,
@@ -61,11 +54,11 @@ func main(){
 		log.Fatalf("failed to listen: %v", err)
 	}
   s := grpc.NewServer()
+  RegisterLoggingServiceServer(s, &logServer{})
   if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
-  RegisterLoggingServiceServer(s, &logServer{})
 
 }
 

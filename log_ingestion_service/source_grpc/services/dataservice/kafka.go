@@ -39,7 +39,7 @@ func getNewkafkaService() (*KafkaService, error){
 func (k *KafkaService) Connect(context context.Context) error{
   kafkaConnector, err := kafka.NewProducer(getKafkaConfig())
   if err!=nil{
-    fmt.Println("error connecting to kafkaaaaa:", err)
+    fmt.Println("error connecting to kafka:", err)
     k.batchProcess = batchProcess{}
     return err
   }else{
@@ -140,7 +140,6 @@ func (b *batchProcess) flush(topic string){
     if v == nil{
       continue
     }
-    fmt.Println("sending message")
     err := b.producer.Produce(&kafka.Message{
       TopicPartition: kafka.TopicPartition{
         Topic: &topic,
@@ -152,6 +151,8 @@ func (b *batchProcess) flush(topic string){
       fmt.Printf("error producing message to topic &s: %v\n", topic, err)
     }
   }
+  // Remove the flushed topic's buffer
+  delete(b.buffer, topic)
 
 }
 
