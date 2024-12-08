@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sourceweb/config"
 	"sourceweb/constants"
 	"sync"
 	"time"
@@ -11,7 +12,6 @@ import (
 )
 
 type KafkaService struct{
-  config map[string]string
   batchProcess batchProcess
 } 
 
@@ -19,28 +19,25 @@ type batchProcess struct {
   producer *kafka.Producer
   batchSize int
   batchWindow time.Duration
-  buffer [] []byte
+  buffer map[string][][]byte
   bufferMu sync.Mutex
   done chan struct{}
-  logChan chan []byte
+  logChan chan logChanStruct
+}
+
+type logChanStruct struct{
   topicName string
+  message []byte
 }
 
-func NewKafkaService(config map[string]string) (*KafkaService, error) {
-	return &KafkaService{config: config}, nil
+func NewKafkaService() (*KafkaService, error) {
+	return &KafkaService{}, nil
 }
 
-func (k *KafkaService) Connect(ctx context.Context, config map[string]string) error {
+func (k *KafkaService) Connect(ctx context.Context) error {
+  fmt.Println("kafka config:",getKafkaConfig() )
 	// Kafka connection logic
-  kafkaConnector, err := kafka.NewProducer(&kafka.ConfigMap{ "bootstrap.servers":"kafka-service",
-    "client.id":"logProducer",
-    "acks":"all",
-    "retries": 5,
-    "message.send.max.retries": 5,
-    "delivery.timeout.ms": 100000,
-    "linger.ms":5,
-    "log_level": 7,
-  })
+  kafkaConnector, err := kafka.NewProducer(getKafkaConfig())
 
   if err!=nil{
     fmt.Printf("error connecting to kafka %v, shutting down the server\n", err)
@@ -55,8 +52,8 @@ func (k *KafkaService) Connect(ctx context.Context, config map[string]string) er
     producer: kafkaConnector,
     batchSize: constants.BatchSize,
     batchWindow: constants.BufferTime,
-    buffer: make([][]byte, 0, constants.BatchSize),
-    logChan : make(chan []byte, constants.BatchSize*2), // buffer channel to handle spike in traffic 
+    buffer: make(map[string][][]byte, constants.BatchSize),
+    logChan : make(chan logChanStruct, constants.BatchSize*2), // buffer channel to handle spike in traffic 
     done: make(chan struct{}),
   }
   go k.batchProcess.processLogs()
@@ -65,9 +62,11 @@ func (k *KafkaService) Connect(ctx context.Context, config map[string]string) er
 
 func (k *KafkaService) ProduceMessage(ctx context.Context, message []byte, topicName string) (bool, error) {
   // Kafka produce logic
-  k.batchProcess.topicName = topicName
   select {
-  case k.batchProcess.logChan <-message:
+  case k.batchProcess.logChan <-logChanStruct{
+    topicName: topicName,
+    message: message,
+  }: 
     return true, nil
   default:
     return false, errors.New("log channel is full")
@@ -89,46 +88,84 @@ func(b * batchProcess) processLogs(){
     //when new log comes in 
     case log := <-b.logChan:
       b.bufferMu.Lock()
-      b.buffer = append(b.buffer, log)
-      if len(b.buffer)>= b.batchSize{
-      //flush logs 
-        b.flush()
+      // Ensure buffer map is initialized
+      if b.buffer == nil {
+        b.buffer = make(map[string][][]byte)
+      }
+      b.buffer[log.topicName] = append(b.buffer[log.topicName], log.message)
+      
+      // Check if any topic's buffer is full
+      for topic, msgs :=range b.buffer {
+        if len(msgs) >= b.batchSize {
+          b.flush(topic)
+        }
       }
       b.bufferMu.Unlock()
+      
     case <-ticker.C:
       b.bufferMu.Lock()
-      if len(b.buffer) > 0 {
-        //flush
-        b.flush()
-      }
-    b.bufferMu.Unlock()
-    case <-b.done:
-      b.bufferMu.Lock()
-      if len(b.buffer) > 0{
-        b.flush()
+      // Flush non-empty topic buffers
+      for topic, msgs := range b.buffer {
+        if len(msgs) > 0 {
+          b.flush(topic)
+        }
       }
       b.bufferMu.Unlock()
-      return;
+
+      case <-b.done:
+      b.bufferMu.Lock()
+      // Flush all topic buffers on shutdown
+      for topic, msgs := range b.buffer {
+        if len(msgs) > 0 {
+          b.flush(topic)
+        }
+      }
+      b.bufferMu.Unlock()
+      return
     }
   }
 }
 
 
-func (b *batchProcess) flush(){
-  if len(b.buffer) == 0{
+func (b *batchProcess) flush(topic string){
+  topicBuffer := b.buffer[topic]
+  if len(topicBuffer) == 0 {
     return 
   }
-  for _,v := range b.buffer{
-    if v == nil{
+  
+  for _, v := range topicBuffer {
+    if v == nil {
       continue
     }
-     err := b.producer.Produce(&kafka.Message{
-    TopicPartition: kafka.TopicPartition{Topic: &b.topicName, Partition: kafka.PartitionAny},
-    Value:v,
+    err := b.producer.Produce(&kafka.Message{
+      TopicPartition: kafka.TopicPartition{
+        Topic: &topic, 
+        Partition: kafka.PartitionAny,
+      },
+      Value: v,
     }, nil)
-    if err !=nil{
-      fmt.Println("error producing message to kafka:", err)
+    
+    if err != nil {
+      fmt.Printf("error producing message to topic %s: %v\n", topic, err)
     }
-  }
-  b.buffer = [][]byte{}
+  } 
+  // Remove the flushed topic's buffer
+  delete(b.buffer, topic)
 }
+
+
+
+
+func getKafkaConfig() *kafka.ConfigMap{
+  return &kafka.ConfigMap{
+    "bootstrap.servers": config.Config.KAFKA_HOST,
+    "client.id": config.Config.MESSAGE_BROKER_CLIENTID,
+    "acks": config.Config.MESSSAGE_BROKER_ACKS,
+    "retries": config.Config.MESSAGE_BROKER_RETRIES,
+    "message.send.max.retries": config.Config.MESSAGE_BROKER_MAX_RETRIES,
+    "delivery.timeout.ms": config.Config.MESSAGE_BROKER_TIMEOUT,
+    "linger.ms": config.Config.MESSAGE_BROKER_LINGER_MS,
+    "log_level": config.Config.MESSAGE_BROKER_LOG_LEVEL,
+  }
+}
+

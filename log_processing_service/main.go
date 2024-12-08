@@ -23,13 +23,12 @@ func main(){
     })
   })
   config.InitEnv()
-  fmt.Println("message broker:", config.Config.MESSAGE_BROKER)
-  DataStreamService, errorData := datastream.CreateDataStream(context.Background(),make(map[string]string), config.Config.MESSAGE_BROKER)
+  DataStreamService, errorData := datastream.CreateDataStream(context.Background(), config.Config.MESSAGE_BROKER)
   if errorData != nil{
     fmt.Println("error connecting to message broker, shutting down")
     os.Exit(1)
   }
-  err := DataStreamService.Connect(context.Background(), make(map[string]string))
+  err := DataStreamService.Connect(context.Background())
   if err != nil{
     fmt.Println("errow connecting to data stream,::", err)
     os.Exit(1)

@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log-processor/config"
 	"log-processor/datastore/models"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type KafkaStream struct{
   Consumer *kafka.Consumer
-  configMap map[string]string
   topics []string
   workers int
   maxRetries int
@@ -33,19 +34,19 @@ type ConsumerConfig struct{
 }
 
 
-func getNewkafkaStream(configMap map[string]string) (*KafkaStream, error){
-  return &KafkaStream{configMap: configMap,
-    maxRetries: 5,
-    workers: 5,
+func getNewkafkaStream() (*KafkaStream, error){
+  return &KafkaStream{
+    maxRetries: config.Config.KAFKA_MAX_RETRIES,
+    workers: config.Config.KAFKA_WORKERS,
     retryBackoff: time.Second,
   }, nil
 }
 
-func (k *KafkaStream) Connect(ctx context.Context, config map[string]string) error{
+func (k *KafkaStream) Connect(ctx context.Context) error{
   KafkaConnector,err := kafka.NewConsumer(&kafka.ConfigMap{
-    "bootstrap.servers":    "kafka-service",
-     "group.id":             "foo",
-     "auto.offset.reset":    "smallest",
+    "bootstrap.servers":    config.Config.KAFKA_HOST,
+     "group.id":            config.Config.KAFKA_GROUP_ID,
+     "auto.offset.reset":    config.Config.KAFKA_OFFSET_RESET,
   })
   if err != nil {
     fmt.Println("issue while connecting to kafka", err)
@@ -70,9 +71,8 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
   messageChan := make(chan *kafka.Message, k.workers)
 
   var wg sync.WaitGroup
-
-     consumeCtx, cancel := context.WithCancel(ctx) 
-    defer cancel()
+  consumeCtx, cancel := context.WithCancel(ctx) 
+  defer cancel()
   for i := 0; i< k.workers; i++{
     wg.Add(1)
     go k.messageWorker(messageChan, &wg)
@@ -93,7 +93,7 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
     default: 
       msg, err := k.Consumer.ReadMessage(time.Second)
       if err!=nil{
-          fmt.Println("error reading message:", err)
+          // fmt.Println("error reading message:", err)
           continue
         }
       select {
@@ -122,21 +122,24 @@ func (k * KafkaStream) messageWorker(messageChan <- chan *kafka.Message, wg *syn
 func (k * KafkaStream) processMessageWithRetry(msg *kafka.Message) error {
   var error error
   for attempt :=0 ; attempt < k.maxRetries; attempt++{
+    fmt.Printf("trying for attemp no:%v", attempt)
     error = k.processMessage(msg)
-    if error != nil {
-     return error 
+    if error == nil {
+      fmt.Println("processed message successfully")
+     return nil 
+    }else{
+      fmt.Println("issue while processing message", error)
     }
     if attempt < k.maxRetries {
       time.Sleep(k.retryBackoff)
     }
   }
-  return fmt.Errorf("failed to process message after &d retries :%w", k.maxRetries, error)
+  return fmt.Errorf("failed to process message after %d retries :%w", k.maxRetries, error)
 }
 
 
 func(k *KafkaStream)processMessage(msg *kafka.Message) error{
   var logData models.LogInfo
-  fmt.Println("msg::::", msg)
   err := json.Unmarshal(msg.Value, &logData)
   if err != nil {
     return err
@@ -144,6 +147,7 @@ func(k *KafkaStream)processMessage(msg *kafka.Message) error{
   //insert 
   error := logData.Insert()
   if error != nil {
+    fmt.Println("error while inserting data to elastic:", error)
     return error
   }
   //commit to kafka 

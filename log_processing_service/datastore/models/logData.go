@@ -135,7 +135,7 @@ const (
 )
 func (l *LogInfo) Insert() error{
   data, e := json.Marshal(l)
-
+  fmt.Println("adding to elasticsearch")
   if e!= nil{
     return e
   }
@@ -146,11 +146,13 @@ func (l *LogInfo) Insert() error{
 	}
   res, err := req.Do(context.Background(), datastore.Es)
   if err != nil {
+    fmt.Println("error while inserting to elastic search:", err)
     return err
 	}
 	defer res.Body.Close()
 	// Check if the response is successful
 	if res.IsError() {
+    fmt.Println("error while elastic search:", res.String())
     return errors.New(res.String())
 	} else {
 		fmt.Printf("Document indexed successfully: %s\n", res.String())

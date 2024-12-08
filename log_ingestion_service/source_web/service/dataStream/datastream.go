@@ -7,7 +7,7 @@ import (
 )
 
 type DataStreamServiceInterface interface{
-  Connect(ctx context.Context, config map[string]string) error
+  Connect(ctx context.Context) error
   ProduceMessage(ctx context.Context, message []byte, topicName string) (bool, error)
   Close()
 }
@@ -23,7 +23,7 @@ var (
 
 // ----------------------------- factory to create data
 // stream ---------------------
-func CreateDataStream(provider string, config map[string]string) (*DataStreamService, error) {
+func CreateDataStream(provider string) (*DataStreamService, error) {
 	var service DataStreamServiceInterface
    once.Do(func() {
         StreamService = &DataStreamService{}
@@ -32,7 +32,7 @@ func CreateDataStream(provider string, config map[string]string) (*DataStreamSer
 
 	switch provider {
 	case "KAFKA":
-		service, err = NewKafkaService(config)
+		service, err = NewKafkaService()
     StreamService.service = service
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
@@ -46,8 +46,8 @@ func CreateDataStream(provider string, config map[string]string) (*DataStreamSer
 }
 
 // ------------- data stream service methods
-func(ds *DataStreamService) Connect(ctx context.Context, config map[string]string) (error){
-  return ds.service.Connect(ctx, config)
+func(ds *DataStreamService) Connect(ctx context.Context) (error){
+  return ds.service.Connect(ctx)
 }
 
 func (ds *DataStreamService) ProduceMessage(ctx context.Context, message []byte, topicName string) (bool, error){

@@ -14,10 +14,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	port = flag.Int("port",  config.Config.PORT, "The server port")
-) 
-
 var DataStreamService *dataservice.DataStreamService;
 var err error
 
@@ -42,13 +38,18 @@ type logServer struct {
 
 func main(){
   flag.Parse()
-  DataStreamService, err = dataservice.GetDataStreamService(config.Config.MESSAGE_BROKER, map[string]string{"baseUrl": config.Config.KAFKA_HOST})
+  config.InitEnv()
+  DataStreamService, err = dataservice.GetDataStreamService(config.Config.MESSAGE_BROKER)
   if err!= nil{
     log.Fatalf("Error connecting with kafka : %v", err)
     os.Exit(1)
   }
-  DataStreamService.Connect(context.Background(), map[string]string{"baseUrl":config.Config.KAFKA_HOST})
-  lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+   connectErr := DataStreamService.Connect(context.Background())
+  if connectErr != nil{
+    fmt.Println("error connecting to data service:", connectErr)
+  }
+
+  lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *&config.Config.PORT))
   if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -57,5 +58,7 @@ func main(){
   if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+
+
 }
 

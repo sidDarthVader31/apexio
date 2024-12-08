@@ -10,7 +10,7 @@ import (
 // service interface and utils
 
 type IDataStreamService interface{
-  Connect(context context.Context, config map[string]string) error
+  Connect(context context.Context) error
   ProduceMessage(context context.Context, message []byte, topicName string) (bool, error)
   Close()
 }
@@ -22,8 +22,8 @@ type DataStreamService struct{
 
 
 // data stream service methods
-func (d *DataStreamService) Connect(context context.Context, config map[string]string) error{
-  return d.service.Connect(context, config)
+func (d *DataStreamService) Connect(context context.Context) error{
+  return d.service.Connect(context)
 }
 
 func (d *DataStreamService) ProduceMessage(context context.Context, message []byte, topicName string) (bool, error){
@@ -45,7 +45,7 @@ var (
 )
 
 
-func GetDataStreamService(messaseService string, config map[string]string) (*DataStreamService, error){
+func GetDataStreamService(messaseService string) (*DataStreamService, error){
 	var service IDataStreamService
    once.Do(func() {
         StreamService = &DataStreamService{}
@@ -55,7 +55,7 @@ func GetDataStreamService(messaseService string, config map[string]string) (*Dat
 
   switch(messaseService){
   case "KAFKA":
-    service, err = getNewkafkaService(config)
+    service, err = getNewkafkaService()
     if err!=nil{
       return nil, err
     }
