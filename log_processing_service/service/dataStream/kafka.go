@@ -63,9 +63,7 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
     fmt.Println("issue subsribing to kafka topics:",err)
     os.Exit(1)
   }
-  fmt.Println("subscripbed to topic:", err)
   k.topics = topics
-  fmt.Println("topics:", k.topics)
 
   // setup signal handling for graceful shutdown
   sigChan := make(chan os.Signal, k.workers)
@@ -95,7 +93,7 @@ func (k *KafkaStream) Consume(ctx context.Context, topics []string){
     default: 
       msg, err := k.Consumer.ReadMessage(time.Second)
       if err!=nil{
-          fmt.Println("error reading message:", err)
+          // fmt.Println("error reading message:", err)
           continue
         }
       select {
@@ -124,21 +122,24 @@ func (k * KafkaStream) messageWorker(messageChan <- chan *kafka.Message, wg *syn
 func (k * KafkaStream) processMessageWithRetry(msg *kafka.Message) error {
   var error error
   for attempt :=0 ; attempt < k.maxRetries; attempt++{
+    fmt.Printf("trying for attemp no:%v", attempt)
     error = k.processMessage(msg)
-    if error != nil {
-     return error 
+    if error == nil {
+      fmt.Println("processed message successfully")
+     return nil 
+    }else{
+      fmt.Println("issue while processing message", error)
     }
     if attempt < k.maxRetries {
       time.Sleep(k.retryBackoff)
     }
   }
-  return fmt.Errorf("failed to process message after &d retries :%w", k.maxRetries, error)
+  return fmt.Errorf("failed to process message after %d retries :%w", k.maxRetries, error)
 }
 
 
 func(k *KafkaStream)processMessage(msg *kafka.Message) error{
   var logData models.LogInfo
-  fmt.Println("msg::::", msg)
   err := json.Unmarshal(msg.Value, &logData)
   if err != nil {
     return err
@@ -146,6 +147,7 @@ func(k *KafkaStream)processMessage(msg *kafka.Message) error{
   //insert 
   error := logData.Insert()
   if error != nil {
+    fmt.Println("error while inserting data to elastic:", error)
     return error
   }
   //commit to kafka 

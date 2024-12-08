@@ -146,7 +146,7 @@ func (l *LogInfo) Insert() error{
 	}
   res, err := req.Do(context.Background(), datastore.Es)
   if err != nil {
-    fmt.Println("inserted to elastic search")
+    fmt.Println("error while inserting to elastic search:", err)
     return err
 	}
 	defer res.Body.Close()
