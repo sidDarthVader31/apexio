@@ -1,4 +1,3 @@
-#deployment and service for elasticsearch
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,24 +20,42 @@ spec:
         ports:
         - containerPort: 9200
         env:
-         - name: USER
-           valueFrom:
-             secretKeyRef:
-               name: elasticsearch-secret
-               key: USER
-         - name: PASSWORD
-           valueFrom: 
-             secretKeyRef: 
-               name: elasticsearch-secret
-               key: PASSWORD
-
-
---- 
+        - name: discovery.type
+          value: "single-node"
+        - name: xpack.security.enabled
+          value: "false"
+        - name: ES_JAVA_OPTS
+          value: "-Xms512m -Xmx512m"
+        - name: USER
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-secret
+              key: USER
+        - name: PASSWORD
+          valueFrom: 
+            secretKeyRef: 
+              name: elasticsearch-secret
+              key: PASSWORD
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        volumeMounts:
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+      volumes:
+      - name: elasticsearch-data
+        emptyDir: {}
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch-service
 spec:
+  type: ClusterIP
   selector:
     app: elasticsearch
   ports:

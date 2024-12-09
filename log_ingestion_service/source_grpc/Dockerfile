@@ -1,5 +1,7 @@
 #dockerfile for go api
 FROM golang:1.23.2
+WORKDIR /
+COPY .env . 
 WORKDIR /app
 COPY go.mod go.sum ./ 
 RUN go mod download 
