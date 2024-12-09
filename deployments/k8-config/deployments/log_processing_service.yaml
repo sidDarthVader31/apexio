@@ -2,22 +2,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: log_processing_service-deployment
+  name: log-processing-service-deployment
   labels:
-    app: log_processing_service 
+    app: log-processing-service 
 spec:
   replicas: 1
   selector: 
     matchLabels:
-      app: log_processing_service
+      app: log-processing-service
   template:
     metadata:
       labels:
-        app: log_processing_service
+        app: log-processing-service
     spec:
       containers:
-        - name: log_processing_service
-          image: log_processing_service:1.0
+        - name: log-processing-service
+          image: log-processing-service:1.0
           ports:
             - containerPort: 3003
 ---
@@ -25,11 +25,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: log_processing_service-service
+  name: log-processing-service-service
 spec: 
   type: NodePort
   selector: 
-    app: log_processing_service 
+    app: log-processing-service 
   ports:
     - protocol: TCP
       port: 3003

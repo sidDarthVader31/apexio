@@ -135,8 +135,10 @@ func (b *batchProcess) flush(topic string){
   
   for _, v := range topicBuffer {
     if v == nil {
+      fmt.Println("v is nil")
       continue
     }
+    fmt.Println("sending message:", len(v))
     err := b.producer.Produce(&kafka.Message{
       TopicPartition: kafka.TopicPartition{
         Topic: &topic, 
@@ -144,6 +146,7 @@ func (b *batchProcess) flush(topic string){
       },
       Value: v,
     }, nil)
+    fmt.Println("message sent")
     
     if err != nil {
       fmt.Printf("error producing message to topic %s: %v\n", topic, err)
