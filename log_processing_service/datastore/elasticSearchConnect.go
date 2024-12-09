@@ -3,6 +3,7 @@ package datastore
 import (
 	"fmt"
 	"log-processor/config"
+
 	"github.com/elastic/go-elasticsearch/v8"
 )
 var Es *elasticsearch.Client
@@ -21,8 +22,14 @@ func ConnectToElastic() (*elasticsearch.Client, error){
   if err != nil {
     fmt.Println("connection to elastic search failed:", err)
   }else{
-    fmt.Println("successfully connected to elastic search :")
+    fmt.Println("successfully connected to elastic search, now creating index :")
+    ie :=InitIndex()
+    if ie != nil {
+      fmt.Println("error while creating index::", ie)
+      return nil, ie
+    }else{
+      fmt.Println("index created successfully")
+    }
   }
-  fmt.Println("elastic client:", &Es)
   return Es, err
 }

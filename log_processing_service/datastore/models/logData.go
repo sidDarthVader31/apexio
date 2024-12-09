@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log-processor/constants"
 	"log-processor/datastore"
-
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
@@ -96,24 +96,26 @@ elastic search index mapping -
     }
   }
 }
-**/ 
+**/
+
+
 type LogInfo struct {
 	Id        uint                    `json:"id"`
 	Metadata  Metadata                `json:"metadata"` 
   Timestamp uint64                  `json:"timestamp"`
   Loglevel  string                  `json:"logLevel"`
   Message   string                  `json:"message"`
-  Source    Source                 `json:"source"`
+  Source    Source                  `json:"source"`
 }
 
 
 type Metadata struct {
-  RequestId string                 `json:"requestId"` 
-  ClientIp  string                 `json:"clientIp"` 
-  UserAgent string                 `json:"userAgent"` 
-  RequestMethod string             `json:"requestMethod"` 
-  RequestPath string               `json:"requestPath"` 
-  ResponseStatus int            `json:"responseStatus"` 
+  RequestId string                  `json:"requestId"` 
+  ClientIp  string                  `json:"clientIp"` 
+  UserAgent string                  `json:"userAgent"` 
+  RequestMethod string              `json:"requestMethod"` 
+  RequestPath string                `json:"requestPath"` 
+  ResponseStatus int                `json:"responseStatus"` 
   ResponseDuration float32          `json:"responseDuration"` 
   Extra map[string] string          `json:"extra"` 
 }
@@ -124,7 +126,9 @@ type Source struct{
   Environment string                `json:"environment"` 
   Extra map[string] string          `json:"extra"` 
 }
+
 type LogLevel string
+
 // Constants for LogLevel
 const (
 	LogLevelDebug   LogLevel = "DEBUG"
@@ -133,6 +137,7 @@ const (
 	LogLevelError   LogLevel = "ERROR"
 	LogLevelFatal   LogLevel = "FATAL"
 )
+
 func (l *LogInfo) Insert() error{
   data, e := json.Marshal(l)
   fmt.Println("adding to elasticsearch")
@@ -140,7 +145,7 @@ func (l *LogInfo) Insert() error{
     return e
   }
   req := esapi.IndexRequest{
-		Index:      "raw_logs", // Index name
+		Index:      constants.LOGS_INDEX_NAME, // Index name
 		Body:       bytes.NewReader(data),
 		Refresh:    "true", // Make the document immediately available for search
 	}
@@ -159,4 +164,3 @@ func (l *LogInfo) Insert() error{
 	}
   return nil
 }
-
