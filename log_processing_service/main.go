@@ -8,14 +8,13 @@ import (
 	ds "log-processor/datastore"
 	datastream "log-processor/service/dataStream"
 	"os"
-
 	"github.com/gin-gonic/gin"
 )
 
 var Routev1 *gin.RouterGroup;
 func main(){
   fmt.Println("starting kafka consumer")
- r := gin.Default()
+  r := gin.Default()
   Routev1 = r.Group("/api/v1")
   Routev1.GET("/health", func(ctx *gin.Context) {
     ctx.JSON(200, gin.H{
