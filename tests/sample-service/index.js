@@ -127,20 +127,29 @@ const getSamplePayload = () =>{
   } 
 }
 app.get('/generate/sample-logs/:count', async (req, res) =>{
+  let successCount = 0;
+  let failureCount = 0;
   const count = req.params.count;
-  try{
     for(let i = 0; i< count;i++){
-    const data =  getSamplePayload();
-    const response = await axios.default.post('http://localhost:8080/api/v1/log', data)
-    console.log(`response for iteration:${i}: ${response.status}`);
+      try {
+        const data =  getSamplePayload();
+        const response = await axios.default.post('http://localhost:8080/api/v1/log', data)
+        console.log(`response for iteration:${i}: ${response.status}`);
+        if(response.status == 201){
+        successCount++;
+        }
+        else{
+          failureCount++;
+         }
+      }
+      catch(e){
+        console.log(`error:`, e)
+      }
     }
-    return res.send(data).status(200);
-  }
-    catch(e){
-    console.log(`error:`, e)
-    return res.send(e.toString()).status(500)
-  }
+  return res.send({totalCount: count
+  , successCount, failureCount}).status(200);
 });
+
 app.listen(3001, () =>{
   console.log(`sample server running on 3001`)
 })
