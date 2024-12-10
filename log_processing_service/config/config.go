@@ -20,7 +20,6 @@ type IConfig struct{
   ELASTIC_PASSWORD string
   ELASTIC_USER string
 
-  
 }
 
 var Config IConfig
@@ -52,4 +51,5 @@ func initEnvVariables(){
   Config.ELASTIC_PORT = viper.GetString("ELASTIC_PORT")
   Config.ELASTIC_USER = viper.GetString("ELASTIC_USER")
   Config.ELASTIC_PASSWORD = viper.GetString("ELASTIC_PASSWORD")
+
 }
