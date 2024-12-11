@@ -109,7 +109,7 @@ func main(){
   if dasherr!=nil{
     fmt.Println("error while cratin dashboard:", dasherr)
   }else{
-    fmt.Println("dashboard response:", string(dashboardresponse[]))
+    fmt.Println("dashboard response:", string(dashboardresponse[:]))
   }
 }
 
