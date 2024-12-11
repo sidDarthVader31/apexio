@@ -15,6 +15,7 @@ const (
 	POST  = "POST"
 	GET   = "GET" 
 )
+
 type ElasticsearchDatasource struct {
     Name                            string `json:"name"`
     Type                            string `json:"type"`
@@ -26,35 +27,35 @@ type ElasticsearchDatasource struct {
         Index                       string `json:"index"`
         LogMessageField             string `json:"logMessageField"`
         LogLevelField               string `json:"logLevelField"`
-    } `json:"jsonData"`
+    }                                      `json:"jsonData"`
 }
 
 type Datasource struct {
-    ID            int    `json:"id"`
-    UID           string `json:"uid"`
-    OrgID         int    `json:"orgId"`
-    Name          string `json:"name"`
-    Type          string `json:"type"`
-    TypeLogoURL   string `json:"typeLogoUrl"`
-    Access        string `json:"access"`
-    URL           string `json:"url"`
-    User          string `json:"user"`
-    Database      string `json:"database"`
-    BasicAuth     bool   `json:"basicAuth"`
-    BasicAuthUser string `json:"basicAuthUser"`
-    WithCredentials bool   `json:"withCredentials"`
-    IsDefault     bool   `json:"isDefault"`
+    ID                       int    `json:"id"`
+    UID                      string `json:"uid"`
+    OrgID                    int    `json:"orgId"`
+    Name                     string `json:"name"`
+    Type                     string `json:"type"`
+    TypeLogoURL              string `json:"typeLogoUrl"`
+    Access                   string `json:"access"`
+    URL                      string `json:"url"`
+    User                     string `json:"user"`
+    Database                 string `json:"database"`
+    BasicAuth                bool   `json:"basicAuth"`
+    BasicAuthUser            string `json:"basicAuthUser"`
+    WithCredentials          bool   `json:"withCredentials"`
+    IsDefault                bool   `json:"isDefault"`
     JsonData      struct {
-        ESVersion    int    `json:"esVersion"`
-        Index        string `json:"index"`
-        LogLevelField string `json:"logLevelField"`
-        LogMessageField string `json:"logMessageField"`
-        TimeField     string `json:"timeField"`
-    } `json:"jsonData"`
-    SecureJsonFields map[string]interface{} `json:"secureJsonFields"`
-    Version          int    `json:"version"`
-    ReadOnly         bool   `json:"readOnly"`
-    APIVersion       string `json:"apiVersion"`
+        ESVersion            int    `json:"esVersion"`
+        Index                string `json:"index"`
+        LogLevelField        string `json:"logLevelField"`
+        LogMessageField      string `json:"logMessageField"`
+        TimeField            string `json:"timeField"`
+    }                               `json:"jsonData"`
+    SecureJsonFields         map[string]interface{} `json:"secureJsonFields"`
+    Version                  int    `json:"version"`
+    ReadOnly                 bool   `json:"readOnly"`
+    APIVersion               string `json:"apiVersion"`
 }
 
 type DashboardPayload struct {
@@ -66,8 +67,9 @@ type envVars struct{
   grafanaBaseUrl string
   apiToken string
 }
+var env envVars
 func main(){
-  env := getEnv()
+  env = getEnv()
   env.grafanaBaseUrl = "http://localhost:3000"
 
   //create a data source 
@@ -129,7 +131,7 @@ func apicall(method string,endpoint string,  baseUrl string, options []byte) ([]
 func makePostCall(baseUrl string, endpoint string, postBody []byte ) ([]byte, error){
   fmt.Println("endpoiont", fmt.Sprintf("%s%s", baseUrl, endpoint))
   resp, errr := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", baseUrl, endpoint), bytes.NewBuffer(postBody))
-  resp.Header.Add("Authorization",  "Bearer <token>")
+  resp.Header.Add("Authorization",  fmt.Sprintf("Bearer %s", env.apiToken))
   resp.Header.Add("Content-Type", "application/json")
 
   if errr != nil{
@@ -152,14 +154,14 @@ func makePostCall(baseUrl string, endpoint string, postBody []byte ) ([]byte, er
 func makeGetRequest(baseUrl string, endpoint string) ([]byte, error){
 
   resp, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", baseUrl, endpoint), nil)
-  resp.Header.Add("Authorization", "Bearer <token>")
+  resp.Header.Add("Authorization", fmt.Sprintf("Bearer %s", env.apiToken))
 
   response, err := http.DefaultClient.Do(resp)
-  defer response.Body.Close()
   if(err != nil){
     fmt.Println("error returned with api call:", err)
     return nil, err
   }
+  defer response.Body.Close()
   body, err := io.ReadAll(response.Body)
   return body, nil
 }
@@ -179,9 +181,8 @@ func getDashboardJson() []byte{
   return dashboardJson
 }
 
-func updateDataSourceInJSON(dashboardJson []byte, datasourceUid string) []byte{
+func updateDataSourceInJSON(dashboardJson []byte, datasourceUid string) []byte {
   str := string(dashboardJson[:])
-
-   newString :=strings.ReplaceAll(str, "<replace>", datasourceUid)
+  newString :=strings.ReplaceAll(str, "<replace>", datasourceUid)
   return []byte(newString)
 } 
