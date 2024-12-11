@@ -18,13 +18,12 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 5,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "elasticsearch",
-        "uid": "de47efbompou8f"
+        "uid": "<replace>"
       },
       "fieldConfig": {
         "defaults": {
@@ -115,7 +114,7 @@
           ],
           "datasource": {
             "type": "elasticsearch",
-            "uid": "de47efbompou8f"
+            "uid": "<replace>"
           },
           "metrics": [
             {
@@ -134,7 +133,7 @@
     {
       "datasource": {
         "type": "elasticsearch",
-        "uid": "de47efbompou8f"
+        "uid": "<replace>"
       },
       "fieldConfig": {
         "defaults": {
@@ -213,6 +212,7 @@
       "pluginVersion": "11.4.0-208234",
       "targets": [
         {
+          "alias": "",
           "bucketAggs": [
             {
               "field": "timestamp",
@@ -225,7 +225,7 @@
           ],
           "datasource": {
             "type": "elasticsearch",
-            "uid": "de47efbompou8f"
+            "uid": "<replace>"
           },
           "metrics": [
             {
@@ -233,7 +233,7 @@
               "type": "count"
             }
           ],
-          "query": "level:ERROR",
+          "query": "logLevel:\"ERROR\" or LogLevel:\"FATAL\"",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -244,7 +244,7 @@
     {
       "datasource": {
         "type": "elasticsearch",
-        "uid": "de47efbompou8f"
+        "uid": "<replace>"
       },
       "fieldConfig": {
         "defaults": {
@@ -310,7 +310,7 @@
           ],
           "datasource": {
             "type": "elasticsearch",
-            "uid": "de47efbompou8f"
+            "uid": "<replace>"
           },
           "limit": 100,
           "metrics": [
@@ -330,7 +330,7 @@
     {
       "datasource": {
         "type": "elasticsearch",
-        "uid": "de47efbompou8f"
+        "uid": "<replace>"
       },
       "fieldConfig": {
         "defaults": {
@@ -432,7 +432,7 @@
     {
       "datasource": {
         "type": "elasticsearch",
-        "uid": "de47efbompou8f"
+        "uid": "<replace>"
       },
       "fieldConfig": {
         "defaults": {
@@ -575,13 +575,11 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-12h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Application Logs Dashboard",
-  "uid": "ee4eoa7jn08w0d",
-  "version": 16,
+  "title": "test_dashboard",
   "weekStart": ""
 }

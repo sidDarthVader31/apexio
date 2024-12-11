@@ -1,0 +1,23 @@
+#job spec for creating grafana datastore and dashboard
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grafana-dashboard-creation-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: grafana-dashboard-creation 
+        image: grafana-migration:1.0
+        command: ["./grafana-go"]
+        env:
+          - name: GRAFANA_BASE_URL
+            value: grafana-service
+          - name: GRAFANA_SERVICE_TOKEN
+            value: glsa_CGv5B1BomfiZWB4sKwu3Eh4ixRnLC84P_63b7a043
+          - name: ELASTIC_HOST
+            value: "http://elasticsearch-service:9200"
+
+      restartPolicy: Never
+  backoffLimit: 3
+
