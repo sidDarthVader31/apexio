@@ -66,15 +66,15 @@ type DashboardPayload struct {
 type envVars struct{
   grafanaBaseUrl string
   apiToken string
+  elasticHost string
 }
 var env envVars
 func main(){
   env = getEnv()
-  env.grafanaBaseUrl = "http://localhost:3000"
 
   //create a data source 
   esConfig := ElasticsearchDatasource{
-        URL: "http://elasticsearch:9200",
+        URL: env.elasticHost,
         Name: "elastic_api",
         Access: "proxy",
         Type: "elasticsearch",
@@ -170,6 +170,7 @@ func getEnv() envVars{
   return envVars{
     grafanaBaseUrl: os.Getenv("GRAFANA_BASE_URL"),
     apiToken: os.Getenv("GRAFANA_SERVICE_TOKEN"),
+    elasticHost: os.Getenv("ELASTIC_HOST"),
   }
 }
 
