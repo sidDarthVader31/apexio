@@ -169,7 +169,7 @@ func makeGetRequest(baseUrl string, endpoint string) ([]byte, error){
 func getEnv() envVars{
   return envVars{
     grafanaBaseUrl: os.Getenv("GRAFANA_BASE_URL"),
-    apiToken: os.Getenv("GRAFANA_API_TOKEN"),
+    apiToken: os.Getenv("GRAFANA_SERVICE_TOKEN"),
   }
 }
 

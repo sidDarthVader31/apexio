@@ -1,0 +1,21 @@
+#job spec for creating grafana datastore and dashboard
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: grafana-migration:1.0
+        command: ["./grafana-go"]
+        env:
+          - name: GRAFANA_BASE_URL
+            value: grafana-service
+          - name: GRAFANA_SERVICE_TOKEN
+            value: glsa_CGv5B1BomfiZWB4sKwu3Eh4ixRnLC84P_63b7a043
+
+      restartPolicy: Never
+  backoffLimit: 4
+
