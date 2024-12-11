@@ -109,7 +109,7 @@ func main(){
   if dasherr!=nil{
     fmt.Println("error while cratin dashboard:", dasherr)
   }else{
-    fmt.Println("dashboard response:", string(dashboardresponse[:]))
+    fmt.Println("dashboard response:", string(dashboardresponse[]))
   }
 }
 
@@ -129,7 +129,7 @@ func apicall(method string,endpoint string,  baseUrl string, options []byte) ([]
 func makePostCall(baseUrl string, endpoint string, postBody []byte ) ([]byte, error){
   fmt.Println("endpoiont", fmt.Sprintf("%s%s", baseUrl, endpoint))
   resp, errr := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", baseUrl, endpoint), bytes.NewBuffer(postBody))
-  resp.Header.Add("Authorization",  "Bearer glsa_CGv5B1BomfiZWB4sKwu3Eh4ixRnLC84P_63b7a043")
+  resp.Header.Add("Authorization",  "Bearer <token>")
   resp.Header.Add("Content-Type", "application/json")
 
   if errr != nil{
@@ -152,7 +152,7 @@ func makePostCall(baseUrl string, endpoint string, postBody []byte ) ([]byte, er
 func makeGetRequest(baseUrl string, endpoint string) ([]byte, error){
 
   resp, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", baseUrl, endpoint), nil)
-  resp.Header.Add("Authorization", "Bearer glsa_CGv5B1BomfiZWB4sKwu3Eh4ixRnLC84P_63b7a043")
+  resp.Header.Add("Authorization", "Bearer <token>")
 
   response, err := http.DefaultClient.Do(resp)
   defer response.Body.Close()
