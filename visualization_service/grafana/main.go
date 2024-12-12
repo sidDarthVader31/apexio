@@ -71,6 +71,9 @@ type envVars struct{
 var env envVars
 func main(){
   env = getEnv()
+  fmt.Println("grafana base url:", env.grafanaBaseUrl)
+  fmt.Println("api token:", env.apiToken)
+  fmt.Println("elastic host:", env.elasticHost)
 
   //create a data source 
   esConfig := ElasticsearchDatasource{
@@ -85,7 +88,7 @@ func main(){
   esConfig.JsonData.LogMessageField="message"
 
   payload, _ := json.Marshal(esConfig)
-  fmt.Println("JSON payload:", string(payload[:]))
+  fmt.Println("JSON payload for data source creation:", string(payload[:]))
   responseDataSource, err := apicall(POST, "/api/datasources", env.grafanaBaseUrl, payload)
   if err != nil{
     fmt.Println("error creating data source , exiting:", err)
@@ -99,7 +102,6 @@ func main(){
   //get json for dashboard 
   jsonDashboard := getDashboardJson()
   newJson := updateDataSourceInJSON(jsonDashboard, datasource.UID)
-  fmt.Println("new json:", string(newJson[:]))
 
   dashboardPayload := DashboardPayload{
     Dashboard: newJson,
@@ -119,6 +121,7 @@ func main(){
 func apicall(method string,endpoint string,  baseUrl string, options []byte) ([]byte, error) {
   switch method {
     case "POST":
+    fmt.Println("making post call for endpoint:", endpoint)
       return makePostCall(baseUrl, endpoint, options)
     case "GET":
       return makeGetRequest(baseUrl, endpoint)
@@ -129,11 +132,10 @@ func apicall(method string,endpoint string,  baseUrl string, options []byte) ([]
 
 
 func makePostCall(baseUrl string, endpoint string, postBody []byte ) ([]byte, error){
-  fmt.Println("endpoiont", fmt.Sprintf("%s%s", baseUrl, endpoint))
+  fmt.Println("endpoint:", fmt.Sprintf("%s%s", baseUrl, endpoint))
   resp, errr := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", baseUrl, endpoint), bytes.NewBuffer(postBody))
   resp.Header.Add("Authorization",  fmt.Sprintf("Bearer %s", env.apiToken))
   resp.Header.Add("Content-Type", "application/json")
-
   if errr != nil{
     fmt.Println("error during post call:",errr)
   }

@@ -9,15 +9,14 @@ spec:
       containers:
       - name: grafana-dashboard-creation 
         image: grafana-migration:1.0
-        command: ["./grafana-go"]
         env:
           - name: GRAFANA_BASE_URL
-            value: grafana-service
+            value: "http://grafana-service:3000"
           - name: GRAFANA_SERVICE_TOKEN
-            value: glsa_CGv5B1BomfiZWB4sKwu3Eh4ixRnLC84P_63b7a043
+            value: glsa_N6G0bmln4h2XTRcnJHQetP596yFqogRC_1fcfd3e6
           - name: ELASTIC_HOST
             value: "http://elasticsearch-service:9200"
 
       restartPolicy: Never
-  backoffLimit: 3
+  backoffLimit: 1
 
