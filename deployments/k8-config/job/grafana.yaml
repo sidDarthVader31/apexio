@@ -13,7 +13,7 @@ spec:
           - name: GRAFANA_BASE_URL
             value: "http://grafana-service:3000"
           - name: GRAFANA_SERVICE_TOKEN
-            value: glsa_N6G0bmln4h2XTRcnJHQetP596yFqogRC_1fcfd3e6
+            value: <GRAFANA_SERVICE_TOKEN>
           - name: ELASTIC_HOST
             value: "http://elasticsearch-service:9200"
 
