@@ -11,11 +11,11 @@
 
 
 ## Table of Contents
-- [🚀 Overview](#-overview)
-- [⚙️  Project Structure](#-project-structure)
-- [💻 Tech Stack](#-tech-stacks)
-- [🛠️ Modifications](#-modifications)
-- [☁️  Deployment](#-deployment)
+- [Overview](#-overview)
+- [Project Structure](#-project-structure)
+- [Tech Stack](#-tech-stacks)
+- [Modifications](#-modifications)
+- [Deployment](#-deployment)
 
 ## 🚀 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
