@@ -8,15 +8,14 @@
 [![Share](https://img.shields.io/badge/share-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio)
 [![Share](https://img.shields.io/badge/share-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio&title=Apexio%20-%20An%20Open%20Source%20Project)
 
-## Table of Contents 
-- [🚀 Overview] (#-overview)
-- [Project Structure] (#-project-structure)
-- [Tech Stack] (#-tech-stacks)
-- [Modifications] (#-modifications)
-- [Deployment] (#-deployment)
 
 
-
+## Table of Contents
+- [🚀 Overview](#-overview)
+* [⚙️  Project Structure](#-project-structure)
+* [💻 Tech Stack](#-tech-stacks)
+* [🛠️ Modifications](#-modifications)
+* [☁️  Deployment](#-deployment)
 
 ## 🚀 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
@@ -24,7 +23,7 @@ Apexio tries to provide a self hosted logging solution for a distributed
 environment for people who cannot pay for these services and
 who do not want to reinvent the wheel. 
 
-## Project structure 
+## ⚙️  Project Structure
 For ease of development and management this repository is
 currently a monolithic one but in a way that it can be
 seperated pretty easily, 
@@ -71,7 +70,7 @@ The detailed project structure is given below -
 ```
 
 
-## Tech stacks 
+## 💻 Tech Stack 
 - golang
 - kafka
 - docker
@@ -80,7 +79,7 @@ The detailed project structure is given below -
 - elasticsearch 
 
 
-## Modifications 
+## 🛠️ Modifications 
 
 1. **Kafka :** If you wish to have some other data stream
    service instead of kafka, it is pretty simple to do that
@@ -114,7 +113,7 @@ The detailed project structure is given below -
 
 
 
-   ## Deployment 
+## ☁️  Deployment 
 
    1. **Build docker images** - \ 
    ```
