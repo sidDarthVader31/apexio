@@ -12,8 +12,8 @@
 
 ## Table of Contents
 - [Overview](#-overview)
-- [Project Structure](#-project-structure)
 - [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
 - [Modifications](#-modifications)
 - [Deployment](#-deployment)
 
@@ -23,31 +23,41 @@ Apexio tries to provide a self hosted logging solution for a distributed
 environment for people who cannot pay for these services and
 who do not want to reinvent the wheel. 
 
-<!-- ## ⚙️  Project Structure -->
-<!-- For ease of development and management this repository is -->
-<!-- currently a monolithic one but in a way that it can be -->
-<!-- seperated pretty easily,  -->
-<!-- each directory is a service which will have its separate -->
-<!-- mod file and dockerfile -->
-<!---->
-<!-- ### log_ingestion_service  -->
-<!-- This provides two services REST and gRPC for your -->
-<!-- application to interact and sent the logs for further -->
-<!-- processing  -->
-<!---->
-<!-- ### log_processing_service  -->
-<!-- This service is responsible for processing and storing the -->
-<!-- logs  -->
-<!---->
-<!-- ### visualization_service  -->
-<!-- This service helps in auto deployment of grafana dashboard -->
-<!-- for proactive monitoring and analysis -->
-<!---->
-<!-- ### deployments(k8) -->
-<!-- This directory contains all the yaml files required to -->
-<!-- deploy apexio via kubernetes  -->
-<!---->
-<!-- The detailed project structure is given below - -->
+
+## 💻 Tech Stack 
+-  [golang](https://go.dev/)
+-  [kafka](https://kafka.apache.org/)
+-  [docker](https://www.docker.com/)
+-  [kubernetes](https://kubernetes.io/)
+-  [grafana](https://grafana.com/)
+-  [elasticsearch](https://www.elastic.co/elasticsearch)
+
+
+## ⚙️  Project Structure
+For ease of development and management this repository is
+currently a monolithic one but in a way that it can be
+seperated pretty easily, 
+each directory is a service which will have its separate
+mod file and dockerfile
+
+### log_ingestion_service 
+This provides two services REST and gRPC for your
+application to interact and sent the logs for further
+processing 
+
+### log_processing_service 
+This service is responsible for processing and storing the
+logs 
+
+### visualization_service 
+This service helps in auto deployment of grafana dashboard
+for proactive monitoring and analysis
+
+### deployments(k8)
+This directory contains all the yaml files required to
+deploy apexio via kubernetes 
+
+The detailed project structure is given below -
 
 ```
 .
@@ -70,13 +80,7 @@ who do not want to reinvent the wheel.
 ```
 
 
-## 💻 Tech Stack 
--  [golang](https://go.dev/)
--  [kafka](https://kafka.apache.org/)
--  [docker](https://www.docker.com/)
--  [kubernetes](https://kubernetes.io/)
--  [grafana](https://grafana.com/)
--  [elasticsearch](https://www.elastic.co/elasticsearch)
+
 
 
 ## 🛠️ Modifications 
