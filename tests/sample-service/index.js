@@ -133,7 +133,7 @@ app.get('/generate/sample-logs/:count', async (req, res) =>{
     for(let i = 0; i< count;i++){
       try {
         const data =  getSamplePayload();
-        const response = await axios.default.post('http://localhost:8080/api/v1/log', data)
+        const response = await axios.default.post('http://localhost:3001/api/v1/log', data)
         console.log(`response for iteration:${i}: ${response.status}`);
         if(response.status == 201){
         successCount++;
@@ -150,6 +150,6 @@ app.get('/generate/sample-logs/:count', async (req, res) =>{
   , successCount, failureCount}).status(200);
 });
 
-app.listen(3001, () =>{
-  console.log(`sample server running on 3001`)
+app.listen(3005, () =>{
+  console.log(`sample server running on 3005`)
 })
