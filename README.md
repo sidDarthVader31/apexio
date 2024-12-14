@@ -14,7 +14,7 @@
 - [Overview](#-overview)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
-- [Modifications](#-modifications)
+- [Modifications](#-🛠️Modifications)
 - [Deployment](#-deployment)
 
 ## 🚀 Overview
