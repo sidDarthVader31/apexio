@@ -67,12 +67,16 @@ The detailed project structure is given below -
    too. Just pass on the service you wish to use during
    server initialization. 
    In main.go, replace this line 
-   ``` DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "KAFKA")
+   ``` 
+   DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "KAFKA")
    ```
-   ``` DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
+   with this - 
+   ``` 
+   DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
    ```
-    Now update *CreateDataStream* function in Datastream service and add a case for your choice of data stream- 
-    ``` case "RABBIT_MQ":
+    Now update **CreateDataStream** function in Datastream service and add a case for your choice of data stream- 
+    ``` 
+    case "RABBIT_MQ":
     service, err := getNewRabbitMQStream()
     if err != nil {
       fmt.Println("error while getting kafka service:", err)
