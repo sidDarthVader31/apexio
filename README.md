@@ -14,7 +14,7 @@
 - [Overview](#-overview)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#project-structure)
-- [Modifications](#-Modifications)
+- [Modifications](#-modifications)
 - [Deployment](#-deployment)
 
 ## 🚀 Overview
@@ -39,45 +39,45 @@ currently a monolithic one but in a way that it can be
 seperated pretty easily, 
 each directory is a service which will have its separate
 mod file and dockerfile
-<!---->
-<!-- ### log_ingestion_service  -->
-<!-- This provides two services REST and gRPC for your -->
-<!-- application to interact and sent the logs for further -->
-<!-- processing  -->
-<!---->
-<!-- ### log_processing_service  -->
-<!-- This service is responsible for processing and storing the -->
-<!-- logs  -->
-<!---->
-<!-- ### visualization_service  -->
-<!-- This service helps in auto deployment of grafana dashboard -->
-<!-- for proactive monitoring and analysis -->
-<!---->
-<!-- ### deployments(k8) -->
-<!-- This directory contains all the yaml files required to -->
-<!-- deploy apexio via kubernetes  -->
-<!---->
-<!-- The detailed project structure is given below - -->
-<!---->
-<!-- ``` -->
-<!-- . -->
-<!-- ├── LICENSE -->
-<!-- ├── README.md -->
-<!-- ├── log_ingestion_service -->
-<!-- │   ├── sourcegrpc -->
-<!-- │   └── sourceweb -->
-<!-- │       ├── Dockerfile -->
-<!-- │       ├── go.mod -->
-<!-- │       ├── go.sum -->
-<!-- │       └── main.go -->
-<!-- ├── log_processing_service -->
-<!-- │   ├── Dockerfile -->
-<!-- │   └── main.go -->
-<!-- ├── visualization_service -->
-<!-- │   ├── Dockerfile -->
-<!-- │   └── main.go -->
-<!-- . -->
-<!-- ``` -->
+
+### log_ingestion_service 
+This provides two services REST and gRPC for your
+application to interact and sent the logs for further
+processing 
+
+### log_processing_service 
+This service is responsible for processing and storing the
+logs 
+
+### visualization_service 
+This service helps in auto deployment of grafana dashboard
+for proactive monitoring and analysis
+
+### deployments(k8)
+This directory contains all the yaml files required to
+deploy apexio via kubernetes 
+
+The detailed project structure is given below -
+
+```
+.
+├── LICENSE
+├── README.md
+├── log_ingestion_service
+│   ├── sourcegrpc
+│   └── sourceweb
+│       ├── Dockerfile
+│       ├── go.mod
+│       ├── go.sum
+│       └── main.go
+├── log_processing_service
+│   ├── Dockerfile
+│   └── main.go
+├── visualization_service
+│   ├── Dockerfile
+│   └── main.go
+.
+```
 
 
 ## 🛠️ Modifications 
