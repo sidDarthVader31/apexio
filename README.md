@@ -40,22 +40,22 @@ seperated pretty easily,
 each directory is a service which will have its separate
 mod file and dockerfile
 
-### log_ingestion_service 
-This provides two services REST and gRPC for your
-application to interact and sent the logs for further
-processing 
+    ### log_ingestion_service 
+    This provides two services REST and gRPC for your
+    application to interact and sent the logs for further
+    processing 
 
-### log_processing_service 
-This service is responsible for processing and storing the
-logs 
+    ### log_processing_service 
+    This service is responsible for processing and storing the
+    logs 
 
-### visualization_service 
-This service helps in auto deployment of grafana dashboard
-for proactive monitoring and analysis
+    ### visualization_service 
+    This service helps in auto deployment of grafana dashboard
+    for proactive monitoring and analysis
 
-### deployments(k8)
-This directory contains all the yaml files required to
-deploy apexio via kubernetes 
+    ### deployments(k8)
+    This directory contains all the yaml files required to
+    deploy apexio via kubernetes 
 
 The detailed project structure is given below -
 
@@ -108,8 +108,8 @@ The detailed project structure is given below -
     }
     ```
    
-   Create a new file `*rabbitmq.go*` and implement the
-   interface `*IDataStream*`  and you are good to go.
+   Create a new file `rabbitmq.go` and implement the
+   interface `IDataStream`  and you are good to go.
 
    You need to implement the code for
    producing/consuming messsages as per your service
@@ -119,15 +119,15 @@ The detailed project structure is given below -
 
 ## ☁️  Deployment 
    1. Clone the repository
-   2. Build docker images - \ 
+   2. Build docker images -  
    ```
    docker build -t source-web:1.0 /log_ingestion_service/.
    docker build -t source-grpc:1.0 /log_ingestion_Service/.
    docker build -t log-processing-service:1.0
    /log_processing_service/.
    ```
-   3. Push these images in your registry- 
-   4. start with kubernetes deployment-
+   3. Push these images in your registry 
+   4. start with kubernetes deployment
    ```
     cd deployemtns/k8-config 
 
