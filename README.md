@@ -98,7 +98,7 @@ The detailed project structure is given below -
    ``` 
    DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
    ```
-    Now update ==CreateDataStream== function in Datastream service and add a case for your choice of data stream- 
+    Now update CreateDataStream function in Datastream service and add a case for your choice of data stream- 
     ``` 
     case "RABBIT_MQ":
     service, err := getNewRabbitMQStream()
@@ -108,8 +108,8 @@ The detailed project structure is given below -
     }
     ```
    
-   Create a new file *rabbitmq.go* and implement the
-   interface *IDataStream*  and you are good to go.
+   Create a new file `*rabbitmq.go*` and implement the
+   interface `*IDataStream*`  and you are good to go.
 
    You need to implement the code for
    producing/consuming messsages as per your service
