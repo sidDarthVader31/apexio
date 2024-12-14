@@ -12,10 +12,10 @@
 
 ## Table of Contents
 - [🚀 Overview](#-overview)
-* [⚙️  Project Structure](#-project-structure)
-* [💻 Tech Stack](#-tech-stacks)
-* [🛠️ Modifications](#-modifications)
-* [☁️  Deployment](#-deployment)
+- [⚙️  Project Structure](#-project-structure)
+- [💻 Tech Stack](#-tech-stacks)
+- [🛠️ Modifications](#-modifications)
+- [☁️  Deployment](#-deployment)
 
 ## 🚀 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
@@ -43,7 +43,7 @@ logs
 This service helps in auto deployment of grafana dashboard
 for proactive monitoring and analysis
 
-### deployments 
+### deployments(k8)
 This directory contains all the yaml files required to
 deploy apexio via kubernetes 
 
