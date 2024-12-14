@@ -1,5 +1,5 @@
 ![language](https://img.shields.io/badge/language-go-239120)
-![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macos%20%7C%20windows-blue)
+![Platforms](https://img.shields.io/badge/platforms-linux)
 
 ⭐ Star us on GitHub — it motivates us a lot!
 
