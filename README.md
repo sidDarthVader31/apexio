@@ -33,7 +33,7 @@ who do not want to reinvent the wheel.
 -  [elasticsearch](https://www.elastic.co/elasticsearch)
 
 
-## Project Structure
+## 🗄️ Project Structure
 For ease of development and management this repository is
 currently a monolithic one but in a way that it can be
 seperated pretty easily, 
@@ -80,7 +80,7 @@ The detailed project structure is given below -
 ```
 
 
-## Modifications 
+## 🛠️ Modifications 
 **Kafka :** If you wish to have some other data stream
 service instead of kafka, it is pretty simple to do that
 too. Just pass on the service you wish to use during
