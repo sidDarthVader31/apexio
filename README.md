@@ -41,13 +41,13 @@ important metrics -
 
 
 ## 💻 Tech Stack
--  [![golang][https://go.dev]][https://img.shields.io/badge/go-B1BABF?style=for-the-badge&logo=go&logoColor=29BEB0]
--  [golang](https://go.dev/)
--  [kafka](https://kafka.apache.org/)
--  [docker](https://www.docker.com/)
--  [kubernetes](https://kubernetes.io/)
--  [grafana](https://grafana.com/)
--  [elasticsearch](https://www.elastic.co/elasticsearch)
+
+-  [![golang](https://img.shields.io/badge/go-f8f9f9?style=for-the-badge&logo=go&logoColor=#07add6)](https://go.dev)
+-  [![kafka](https://img.shields.io/badge/kafka-DD0031?style=for-the-badge&logo=kafka)](https://kafka.apache.org/)
+-  [![elasticsearch](https://img.shields.io/badge/elasticsearch-07a0d7?style=for-the-badge&logo=elasticsearch&logoColor=f7cd0b)](https://www.elastic.co/elasticsearch)
+-  [![grafana](https://img.shields.io/badge/grafana-010100?style=for-the-badge&logo=grafana&logoColor=#ea5626)](https://grafana.com/)
+-  [![docker](https://img.shields.io/badge/docker-f8f9f9?style=for-the-badge&logo=docker&logoColor=0999e6)](https://www.docker.com/)
+-  [![kubernetes](https://img.shields.io/badge/kubernetes-f8f9f9?style=for-the-badge&logo=kubernetes&logoColor=3068df)](https://kubernetes.io/)
 
 
 ##  <a id="project-structure"></a> 🗂️ Project Structure
