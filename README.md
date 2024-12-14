@@ -17,6 +17,7 @@
 - [Modifications](#modifications)
 - [Deployment](#-deployment)
 - [Logging](#logging)
+- [Roadmap](#roadmap)
 
 ## 📖 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring and quick debugging assitance.
@@ -310,4 +311,9 @@ sample payload -
   }
 }
 ```
+##  <a id="roadmap"></a> 🔜RoadMap
+### Future releases will have - 
 
+- [ ] Machine learning log anomaly detection
+- [ ] More visualization options
+- [ ] TLS encryption for all communications 
