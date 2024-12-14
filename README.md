@@ -66,7 +66,8 @@ The detailed project structure is given below -
    service instead of kafka, it is pretty simple to do that
    too. Just pass on the service you wish to use during
    server initialization. 
-   In main.go, replace this line 
+   In main.go, replace this line
+
    ``` 
    DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "KAFKA")
    ```
@@ -74,14 +75,15 @@ The detailed project structure is given below -
    ``` 
    DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
    ```
-    Now update **CreateDataStream** function in Datastream service and add a case for your choice of data stream- 
+    Now update ==CreateDataStream== function in Datastream service and add a case for your choice of data stream- 
     ``` 
     case "RABBIT_MQ":
     service, err := getNewRabbitMQStream()
     if err != nil {
       fmt.Println("error while getting kafka service:", err)
       return nil, err
-    }```
+    }
+    ```
    
    Create a new file *rabbitmq.go* and implement the
    interface *IDataStream*  and you are good to go.
