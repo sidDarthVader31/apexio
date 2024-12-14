@@ -17,7 +17,7 @@
 - [Modifications](#-modifications)
 - [Deployment](#-deployment)
 
-## 🚀 Overview
+## 📖 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
 Apexio tries to provide a self hosted logging solution for a distributed 
 environment for people who cannot pay for these services and
@@ -80,78 +80,74 @@ The detailed project structure is given below -
 ```
 
 
-## 🛠️ Modifications 
+## Modifications 
+**Kafka :** If you wish to have some other data stream
+service instead of kafka, it is pretty simple to do that
+too. Just pass on the service you wish to use during
+server initialization. In main.go, replace this line
 
-   **Kafka :** If you wish to have some other data stream
-   service instead of kafka, it is pretty simple to do that
-   too. Just pass on the service you wish to use during
-   server initialization. 
-   In main.go, replace this line
-
-   ``` 
-   DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "KAFKA")
-   ```
-   with this - 
-   ``` 
-   DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
-   ```
-    Now update CreateDataStream function in Datastream service and add a case for your choice of data stream- 
-    ``` 
-    case "RABBIT_MQ":
-    service, err := getNewRabbitMQStream()
-    if err != nil {
-      fmt.Println("error while getting kafka service:", err)
-      return nil, err
-    }
-    ```
+``` 
+DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "KAFKA")
+```
+with this - 
+``` 
+DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
+```
+Now update CreateDataStream function in Datastream service and add a case for your choice of data stream- 
+``` 
+case "RABBIT_MQ":
+service, err := getNewRabbitMQStream()
+if err != nil {
+    fmt.Println("error while getting kafka service:", err)
+    return nil, err
+}
+```
    
-   Create a new file `rabbitmq.go` and implement the
-   interface `IDataStream`  and you are good to go.
+Create a new file `rabbitmq.go` and implement the
+interface `IDataStream`  and you are good to go.
 
-   You need to implement the code for
-   producing/consuming messsages as per your service
-   ofcourse. Refer to `kafka.go` file in `datastream`
+Note: You need to implement the code for
+producing/consuming messsages as per your service
+ofcourse. Refer to `kafka.go` file in `datastream`
 
 
 
-## ☁️ Deployment 
-   1. Clone the repository
-   2. Build docker images -  
-   ```
-   docker build -t source-web:1.0 /log_ingestion_service/.
-   docker build -t source-grpc:1.0 /log_ingestion_Service/.
-   docker build -t log-processing-service:1.0
-   /log_processing_service/.
-   ```
-   3. Push these images in your registry 
-   4. start with kubernetes deployment
-   ```
-    cd deployemtns/k8-config 
+## 🚀 Deployment 
+1. Clone the repository
+2. Build docker images -  
+```
+docker build -t source-web:1.0 /log_ingestion_service/.
+docker build -t source-grpc:1.0 /log_ingestion_Service/.
+docker build -t log-processing-service:1.0
+/log_processing_service/.
+```
+3. Push these images in your registry 
+4. start with kubernetes deployment
+```
+cd deployemtns/k8-config 
 
-    kc apply -f configMap/elasticsearch.yaml
-    kc apply -f configMap/kafka.yaml
+kc apply -f configMap/elasticsearch.yaml
+kc apply -f configMap/kafka.yaml
 
-    kc apply -f secrets.elasticsearch.yaml
-    kc apply -f kafka.yaml 
+kc apply -f secrets.elasticsearch.yaml
+kc apply -f kafka.yaml 
 
-    kc apply deployments/elasticsearch.yaml
-    kc apply deployments/grafana.yaml
-    kc apply deployments/kafka.yaml
-    kc apply deployments/log_processing_service
-    kc apply deployments/source_grpc.yaml
-    kc apply deployments/source_web.yaml
+kc apply deployments/elasticsearch.yaml
+kc apply deployments/grafana.yaml
+kc apply deployments/kafka.yaml
+kc apply deployments/log_processing_service
+kc apply deployments/source_grpc.yaml
+kc apply deployments/source_web.yaml
 
-    kc apply -f ingress/grafana.yaml
-    ```
-   5. Navigate to grafana dashboard and generate a new
-       service account token (admin) and paste that token in
-    `deployments/k8-config/job/grafana.yaml` 
+kc apply -f ingress/grafana.yaml
+```
+5. Navigate to grafana dashboard and generate a new service account token (admin) and paste that token in
+`deployments/k8-config/job/grafana.yaml` 
     
-   6. Run the grafana job to create data source and
-       dashboard 
-       ```
-       kc apply -f deployments/k8-config/job/grafana.yaml
-       ```
+6. Run the grafana job to create data source and dashboard 
+```
+kc apply -f deployments/k8-config/job/grafana.yaml
+```
 
-   Your dashboard will now be fully functional to receive
-    messages
+Your dashboard will now be fully functional to receive
+messages
