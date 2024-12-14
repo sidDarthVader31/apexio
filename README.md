@@ -16,6 +16,7 @@
 - [Project Structure](#project-structure)
 - [Modifications](#modifications)
 - [Deployment](#-deployment)
+- [Logging](#-logging)
 
 ## 📖 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
@@ -150,3 +151,109 @@ kc apply -f deployments/k8-config/job/grafana.yaml
 
 Your dashboard will now be fully functional to receive
 messages
+
+## Logging 
+1. For logging via REST API - 
+    `POST  :<your_cluster_url>:3000/api/v1/log`
+sample Request body - 
+```
+{
+  "id":30,
+  "metadata": {
+    "requestId": "2",
+    "clientIp": "36.75.63.226",
+    "userAgent": "Opera/14.63 (Windows NT 5.2; U; TY Presto/2.9.172 Version/10.00)",
+    "requestMethod": "DELETE",
+    "requestPath": "/payments",
+    "responseStatus": 502,
+    "responseDuration": 194.67143993866,
+    "extra": {
+      "traceId": "58b45b69-e2c0-4cce-bc06-363d1bba3f31"
+    }
+  },
+  "timestamp": 1732974309000,
+  "logLevel": "INFO",
+  "message": "502 Articulus despecto agnosco supra defero.",
+  "source": {
+    "host": "exotic-effector.name",
+    "service": "payments",
+    "environment": "production"
+  }
+}
+```
+Payload structure -
+
+The following table describes the structure of the  request payload:
+
+
+| Key | Type | Description |
+| --- | --- | --- |
+| id | uint | Unique identifier |
+| metadata | Metadata | Metadata information |
+| timestamp | uint64 | Timestamp of the log event |
+| logLevel | string | Log level (e.g. DEBUG, INFO, ERROR) |
+| message | string | Log message |
+| source | Source | Source information |
+
+### Metadata
+
+The `Metadata` struct contains the following fields:
+
+
+| Key | Type | Description |
+| --- | --- | --- |
+| requestId | string | Request ID |
+| clientIp | string | Client IP address |
+| userAgent | string | User agent string |
+| requestMethod | string | Request method (e.g. GET, POST) |
+| requestPath | string | Request path |
+| responseStatus | int | Response status code |
+| responseDuration | float32 | Response duration in seconds |
+| extra | map[string]string | Additional metadata |
+
+### Source
+
+The `Source` struct contains the following fields:
+
+
+| Key | Type | Description |
+| --- | --- | --- |
+| host | string | Hostname or IP address |
+| service | string | Service name |
+| environment | string | Environment name |
+| extra | map[string]string | Additional source information |
+
+
+2. For logging via gRPC - 
+    `<your-cluster-curl>:3002 /IngestLog`
+sample payload - 
+```
+{
+    "entry": {
+  "id":123123123,
+  "metadata": {
+    "requestId": "2",
+    "clientIp": "36.75.63.226",
+    "userAgent": "Opera/14.63 (Windows NT 5.2; U; TY Presto/2.9.172 Version/10.00)",
+    "requestMethod": "DELETE",
+    "requestPath": "/payments",
+    "responseStatus": 502,
+    "responseDuration": 194.67143993866,
+    "extra": {
+      "traceId": "58b45b69-e2c0-4cce-bc06-363d1bba3f31"
+    }
+  },
+  "timestamp": 1733654342000,
+  "logLevel": "INFO",
+  "message": "502 Articulus despecto agnosco supra defero.",
+  "source": {
+    "host": "exotic-effector.name",
+    "service": "payments",
+    "environment": "production"
+  }
+}
+}
+```
+You can also refer to `.proto` file in
+`log_ingestion_service/source_grpc`
+
