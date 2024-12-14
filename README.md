@@ -16,13 +16,15 @@
 - [Project Structure](#project-structure)
 - [Modifications](#modifications)
 - [Deployment](#-deployment)
-- [Logging](#-logging)
+- [Logging](#logging)
 
 ## 📖 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
 Apexio tries to provide a self hosted logging solution for a distributed 
 environment for people who cannot pay for these services and
 who do not want to reinvent the wheel. 
+Apexio uses grafana for visualization. 
+
 
 
 ## 💻 Tech Stack 
@@ -41,20 +43,20 @@ seperated pretty easily,
 each directory is a service which will have its separate
 mod file and dockerfile
 
-### log_ingestion_service 
+#### log_ingestion_service 
 This provides two services REST and gRPC for your
 application to interact and sent the logs for further
 processing 
 
-### log_processing_service 
+#### log_processing_service 
 This service is responsible for processing and storing the
 logs 
 
-### visualization_service 
+#### visualization_service 
 This service helps in auto deployment of grafana dashboard
 for proactive monitoring and analysis
 
-### deployments(k8)
+#### deployments(k8)
 This directory contains all the yaml files required to
 deploy apexio via kubernetes 
 
@@ -256,4 +258,3 @@ sample payload -
 ```
 You can also refer to `.proto` file in
 `log_ingestion_service/source_grpc`
-
