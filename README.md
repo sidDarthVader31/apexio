@@ -33,7 +33,7 @@ who do not want to reinvent the wheel.
 -  [elasticsearch](https://www.elastic.co/elasticsearch)
 
 
-## 🗄️ Project Structure
+## 🗂️ Project Structure
 For ease of development and management this repository is
 currently a monolithic one but in a way that it can be
 seperated pretty easily, 
