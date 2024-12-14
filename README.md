@@ -19,11 +19,23 @@
 - [Logging](#logging)
 
 ## 📖 Overview
-Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
+Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring and quick debugging assitance.
 Apexio tries to provide a self hosted logging solution for a distributed 
 environment for people who cannot pay for these services and
 who do not want to reinvent the wheel. 
-Apexio uses grafana for visualization. 
+Apexio uses grafana for visualization of various key
+important metrics -
+
+1. Log volume (helps in identifying the traffic)
+![log-volume](./assets/log-volume.png)
+2. Error rate (gives insights on bugs in the system)
+![error-rate](./assets/error-rate.png)
+3. Error logs (for quick debugging)
+![error-logs](./assets/error-logs.png)
+4. Response code distribution(to find out types of errors)
+![response-code](./assets/response-code-distribution.png)
+5. Response time distribution(for monitoring slow services)
+![response-time](./assets/response-time.png)
 
 
 
