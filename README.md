@@ -96,16 +96,15 @@ The detailed project structure is given below -
 
    ## Deployment 
 
-   1. **Build docker images** -\ 
+   1. **Build docker images** - \ 
    ```
    docker build -t source-web:1.0 /log_ingestion_service/.
    docker build -t source-grpc:1.0 /log_ingestion_Service/.
    docker build -t log-processing-service:1.0
    /log_processing_service/.
    ```
-   \
-   2. Push these images in your registry\ 
-   3. start with kubernetes deployment -\ 
+   2. Push these images in your registry 
+   3. start with kubernetes deployment - 
     ```
     #deploy config maps, secrets, ingress, jobs, services
     and deployments 
