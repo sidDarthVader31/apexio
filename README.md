@@ -1,4 +1,21 @@
-# Apexio
+![language](https://img.shields.io/badge/language-go-239120)
+![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macos%20%7C%20windows-blue)
+
+⭐ Star us on GitHub — it motivates us a lot!
+
+[![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://twitter.com/intent/tweet?text=Check%20out%20Apexio%20-%20an%20amazing%20project%20by%20%40sidDarthVader31%20%0A%0ARepository%3A%20https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio%0A%0A%23OpenSource%20%23GitHub)
+[![Share](https://img.shields.io/badge/share-1877F2?logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio)
+[![Share](https://img.shields.io/badge/share-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio)
+[![Share](https://img.shields.io/badge/share-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio&title=Apexio%20-%20An%20Open%20Source%20Project)
+
+## Table of Contents 
+- [About] (#-about)
+- [Project Structure] (#-project-structure)
+- [Tech Stack] (#-tech-stacks)
+- [Modifications] (#-modifications)
+- [Deployment] (#-deployment)
+
+# About
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
 Apexio tries to provide a self hosted logging solution for a distributed 
 environment for people who cannot pay for these services and
