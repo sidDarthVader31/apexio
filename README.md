@@ -53,22 +53,22 @@ For ease of development and management this repository is
 currently a monolithic one but in a way that it can be
 seperated pretty easily, 
 each directory is a service which will have its separate
-mod file and dockerfile
+mod file and dockerfile. 
 
-#### log_ingestion_service 
+#### **1. log_ingestion_service** 
 This provides two services REST and gRPC for your
 application to interact and sent the logs for further
 processing 
 
-#### log_processing_service 
+#### **2. log_processing_service**
 This service is responsible for processing and storing the
 logs 
 
-#### visualization_service 
+#### **3. visualization_service** 
 This service helps in auto deployment of grafana dashboard
 for proactive monitoring and analysis
 
-#### deployments(k8)
+#### **4. deployments(k8)**
 This directory contains all the yaml files required to
 deploy apexio via kubernetes 
 
@@ -78,20 +78,62 @@ The detailed project structure is given below -
 .
 ├── LICENSE
 ├── README.md
+├── deployments
+│   └── k8-config
+│       ├── configMap
+│       ├── deployments
+│       ├── ingress
+│       ├── job
+│       └── secrets
 ├── log_ingestion_service
-│   ├── sourcegrpc
-│   └── sourceweb
+│   ├── source_grpc
+│   │   ├── Dockerfile
+│   │   ├── config
+│   │   ├── constants
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── log_payload.pb.go
+│   │   ├── log_payload.proto
+│   │   ├── log_payload_grpc.pb.go
+│   │   ├── main.go
+│   │   └── services
+│   └── source_web
 │       ├── Dockerfile
+│       ├── config
+│       ├── constants
 │       ├── go.mod
 │       ├── go.sum
-│       └── main.go
+│       ├── logDistributor
+│       ├── main.go
+│       ├── routes.go
+│       └── service
 ├── log_processing_service
 │   ├── Dockerfile
-│   └── main.go
-├── visualization_service
-│   ├── Dockerfile
-│   └── main.go
-.
+│   ├── config
+│   │   └── config.go
+│   ├── constants
+│   │   └── constants.go
+│   ├── datastore
+│   │   ├── elasticSearchConnect.go
+│   │   ├── init.go
+│   │   └── models
+│   ├── go.mod
+│   ├── go.sum
+│   ├── main.go
+│   └── service
+│       └── dataStream
+├── tests
+│   └── sample-service
+│       ├── index.js
+│       ├── node_modules
+│       ├── package-lock.json
+│       └── package.json
+└── visualization_service
+    └── grafana
+        ├── Dockerfile
+        ├── dashboard.json
+        ├── go.mod
+        └── main.go
 ```
 
 ##  <a id="modifications"></a>  🛠️ Modifications 
@@ -239,11 +281,11 @@ The `Source` struct contains the following fields:
 
 
 2. For logging via gRPC - 
-    `<your-cluster-curl>:3002 /IngestLog`
+    `<your-cluster-curl>:3002`. Refer to `.proto` file in `log_ingestion_service/source_grpc`
 sample payload - 
 ```
 {
-    "entry": {
+  "entry": {
   "id":123123123,
   "metadata": {
     "requestId": "2",
@@ -264,9 +306,8 @@ sample payload -
     "host": "exotic-effector.name",
     "service": "payments",
     "environment": "production"
+    }
   }
 }
-}
 ```
-You can also refer to `.proto` file in
-`log_ingestion_service/source_grpc`
+
