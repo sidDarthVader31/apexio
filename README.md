@@ -42,7 +42,7 @@ important metrics -
 
 ## 💻 Tech Stack
 
--  [![golang](https://img.shields.io/badge/go-f8f9f9?style=for-the-badge&logo=go&logoColor=#07add6)](https://go.dev)
+-  [![golang](https://img.shields.io/badge/golang-027d9d?style=for-the-badge&logo=go&logoColor=fefffe)](https://go.dev)
 -  [![kafka](https://img.shields.io/badge/kafka-DD0031?style=for-the-badge&logo=kafka)](https://kafka.apache.org/)
 -  [![elasticsearch](https://img.shields.io/badge/elasticsearch-07a0d7?style=for-the-badge&logo=elasticsearch&logoColor=f7cd0b)](https://www.elastic.co/elasticsearch)
 -  [![grafana](https://img.shields.io/badge/grafana-010100?style=for-the-badge&logo=grafana&logoColor=#ea5626)](https://grafana.com/)
