@@ -125,13 +125,3 @@ The detailed project structure is given below -
        service account token (admin) for your grafana
     dashboard and paste that token in
     `deployments/k8-config/job/grafana.yaml` 
-    
-    5. Run the grafana job to create data source and
-       dashboard 
-
-       ```
-       kc apply -f deployments/k8-config/job/grafana.yaml
-       ```
-
-    Your dashboard will now be fully functional to receive
-    messages
