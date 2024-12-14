@@ -96,16 +96,16 @@ The detailed project structure is given below -
 
    ## Deployment 
 
-   1. Build docker images - 
+   1. **Build docker images** -\ 
    ```
    docker build -t source-web:1.0 /log_ingestion_service/.
    docker build -t source-grpc:1.0 /log_ingestion_Service/.
    docker build -t log-processing-service:1.0
    /log_processing_service/.
    ```
-   2. Push these images in your registry 
-
-   3. start with kubernetes deployment - 
+   \
+   2. Push these images in your registry\ 
+   3. start with kubernetes deployment -\ 
     ```
     #deploy config maps, secrets, ingress, jobs, services
     and deployments 
@@ -128,13 +128,11 @@ The detailed project structure is given below -
     kc apply -f ingress/grafana.yaml
     ```
     4. Navigate to grafana dashboard and generate a new
-       service account token (admin) for your grafana
-    dashboard and paste that token in
+       service account token (admin) and paste that token in
     `deployments/k8-config/job/grafana.yaml` 
     
     5. Run the grafana job to create data source and
        dashboard 
-
        ```
        kc apply -f deployments/k8-config/job/grafana.yaml
        ```
