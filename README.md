@@ -13,8 +13,8 @@
 ## Table of Contents
 - [Overview](#-overview)
 - [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Modifications](#-🛠️Modifications)
+- [Project Structure](#project-structure)
+- [Modifications](#-Modifications)
 - [Deployment](#-deployment)
 
 ## 🚀 Overview
@@ -114,7 +114,7 @@ mod file and dockerfile
 
 
 
-## ☁️  Deployment 
+## ☁️ Deployment 
    1. Clone the repository
    2. Build docker images -  
    ```
