@@ -52,12 +52,12 @@ The detailed project structure is given below -
 
 
 ## Tech stacks 
-..* golang
-..* kafka
-..* docker
-..* kubernetes
-..* grafana
-..* elasticsearch 
+-golang
+-kafka
+-docker
+-kubernetes
+-grafana
+-elasticsearch 
 
 
 ## Modifications 
