@@ -208,7 +208,7 @@ kc apply -f deployments/k8-config/job/grafana.yaml
 Your dashboard will now be fully functional to receive
 messages
 
-## Logging 
+## <a id="logging"></a> 📊 Logging 
 1. For logging via REST API - 
     `POST  :<your_cluster_url>:3000/api/v1/log`
 sample Request body - 
