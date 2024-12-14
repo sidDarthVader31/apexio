@@ -9,13 +9,16 @@
 [![Share](https://img.shields.io/badge/share-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio&title=Apexio%20-%20An%20Open%20Source%20Project)
 
 ## Table of Contents 
-- [About] (#-about)
+- [🚀 Overview] (#-overview)
 - [Project Structure] (#-project-structure)
 - [Tech Stack] (#-tech-stacks)
 - [Modifications] (#-modifications)
 - [Deployment] (#-deployment)
 
-# About
+
+
+
+## 🚀 Overview
 Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring.
 Apexio tries to provide a self hosted logging solution for a distributed 
 environment for people who cannot pay for these services and
