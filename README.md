@@ -71,12 +71,12 @@ The detailed project structure is given below -
 
 
 ## 💻 Tech Stack 
-- golang
-- kafka
-- docker
-- kubernetes
-- grafana
-- elasticsearch 
+- [golang] (https://go.dev/)
+- [kafka] (https://kafka.apache.org/)
+- [docker] (https://www.docker.com/)
+- [kubernetes] (https://kubernetes.io/)
+- [grafana] (https://grafana.com/)
+- [elasticsearch] (https://www.elastic.co/elasticsearch)
 
 
 ## 🛠️ Modifications 
