@@ -40,7 +40,8 @@ important metrics -
 
 
 
-## 💻 Tech Stack 
+## 💻 Tech Stack
+-  [![golang][https://go.dev]][https://img.shields.io/badge/go-B1BABF?style=for-the-badge&logo=go&logoColor=29BEB0]
 -  [golang](https://go.dev/)
 -  [kafka](https://kafka.apache.org/)
 -  [docker](https://www.docker.com/)
@@ -311,9 +312,9 @@ sample payload -
   }
 }
 ```
-##  <a id="roadmap"></a> 🔜RoadMap
+##  <a id="roadmap"></a> 🔜 RoadMap
 ### Future releases will have - 
-
+- [ ] deployment pipelines
 - [ ] Machine learning log anomaly detection
 - [ ] More visualization options
 - [ ] TLS encryption for all communications 
