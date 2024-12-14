@@ -79,8 +79,7 @@ The detailed project structure is given below -
 .
 ```
 
-
-## 🛠️ Modifications 
+##  <a id="project-structure"></a>  🛠️ Modifications 
 **Kafka :** If you wish to have some other data stream
 service instead of kafka, it is pretty simple to do that
 too. Just pass on the service you wish to use during
