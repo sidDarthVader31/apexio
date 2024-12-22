@@ -137,6 +137,37 @@ The detailed project structure is given below -
         ├── go.mod
         └── main.go
 ```
+System architecture - 
+
+```mermaid
+flowchart LR
+    Client-->|REST|Source_Web
+    Client-->|gRPC|Source_gRPC
+    
+    subgraph Log_Ingestion_Service[Log Ingestion Service]
+        Source_Web[Source Web]
+        Source_gRPC[Source gRPC]
+    end
+    
+    Source_Web-->Kafka
+    Source_gRPC-->Kafka
+    Kafka-->Log_Processing_Service
+    Log_Processing_Service-->Elasticsearch
+    Grafana-.-|Query|Elasticsearch
+    Custom_Dashboard-.-|Query|Elasticsearch
+    
+    Client[Client]
+    Kafka[(Kafka)]
+    Log_Processing_Service[Log Processing Service]
+    Elasticsearch[(Elasticsearch)]
+    Grafana[Grafana Dashboard]
+    Custom_Dashboard[Custom Dashboard]
+    
+    style Kafka fill:#f96,stroke:#333
+    style Elasticsearch fill:#5ca0f2,stroke:#333
+    style Grafana fill:#f9f,stroke:#333
+    style Custom_Dashboard fill:#f9f,stroke:#333
+    style Log_Ingestion_Service fill:#e4f4e4,stroke:#333
 
 ##  <a id="modifications"></a>  🛠️ Modifications 
 **Kafka :** If you wish to have some other data stream
