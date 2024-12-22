@@ -168,7 +168,7 @@ flowchart LR
     style Grafana fill:#f9f,stroke:#333
     style Custom_Dashboard fill:#f9f,stroke:#333
     style Log_Ingestion_Service fill:#e4f4e4,stroke:#333
-
+```
 ##  <a id="modifications"></a>  🛠️ Modifications 
 **Kafka :** If you wish to have some other data stream
 service instead of kafka, it is pretty simple to do that
