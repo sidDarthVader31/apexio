@@ -1,22 +1,22 @@
 package logDistributor
 
 import (
-	"fmt"
 	"net/http"
 	"sourceweb/constants"
+	logger "sourceweb/logging"
 	"github.com/gin-gonic/gin"
 )
 
 func IngestData(c *gin.Context) {
   var logInfo LogInfo
   if err := c.BindJSON(&logInfo); err != nil {
-    fmt.Println("error while creating json", err)
+		logger.Error(string(JSON_CONVERSION_FAILED), err, logInfo)
         c.IndentedJSON(400, err)
     }
-  success, err := ingestLogs(logInfo, constants.LogTopic)
+  success, errIngest := ingestLogs(logInfo, constants.LogTopic)
   if success == false {
-    fmt.Println("error while ingeting logs :", err)
-    c.IndentedJSON(http.StatusNotFound, err)
+		logger.Error(string(ERROR_INGESTING_LOGS), errIngest, logInfo)
+    c.IndentedJSON(http.StatusNotFound, errIngest)
   }
  c.IndentedJSON(http.StatusCreated, logInfo)
 }

@@ -15,6 +15,7 @@ var Routev1 *gin.RouterGroup;
 
 func main(){
   r := gin.Default() //init gin
+	Routev1 = r.Group("/api/v1")
   config.InitEnv() //init config 
   initRoutes(Routev1) // init routes
 	logger.InitLogger() // init logger 

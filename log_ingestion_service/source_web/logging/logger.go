@@ -13,20 +13,20 @@ type Log struct{
 }
 
 var base *zap.Logger;
-func  Info(message string, metadata ...map[string]interface{}) {
-	base.Info(message, convertMeta(metadata[0])...)
+func  Info(message string, metadata ...any) {
+	base.Info(message, convertMeta(nil, metadata)...)
 }
-func Error(message string,err error, metadata ...map[string] interface{}) {
-	base.Error(message, convertMeta(metadata[0])...)
+func Error(message string,err error, metadata ...any) {
+	base.Error(message, convertMeta(err, metadata)...)
 }
-func  Debug(message string, metadata ...map[string]interface{} ) {
-	base.Debug(message, convertMeta(metadata[0])...)
+func  Debug(message string, metadata ...any) {
+	base.Debug(message, convertMeta(nil, metadata)...)
 }
-func  Warn(message string, metadata ...map[string]interface{}) {
-	base.Warn(message, convertMeta(metadata[0])...)
+func  Warn(message string, metadata ...any) {
+	base.Warn(message, convertMeta(nil, metadata)...)
 }
-func  Fatal(message string, metadata ...map[string]interface{}) {
-	base.Fatal(message, convertMeta(metadata[0])...)
+func  Fatal(message string, metadata ...any) {
+	base.Fatal(message, convertMeta(nil, metadata)...)
 }
 
 func InitLogger() {
@@ -49,14 +49,16 @@ func initZap(){
 	}
 }
  // helper to convert metadata → zap fields
-func convertMeta(meta map[string]interface{}, err ...error) []zap.Field {
-	fields := make([]zap.Field, 0, len(meta))
-	for k, v := range meta {
-		fields = append(fields, zap.Any(k, v))
+func convertMeta(err error, meta ...any) []zap.Field {
+	fields := make([]zap.Field, 0, len(meta)+1)
+	for _, m := range meta {
+		if m != nil {
+			fields = append(fields, zap.Any("metadata", m))
+		}
 	}
 
-	if len(err)>0 {
-		fields = append(fields, zap.Error(err[0]))
+	if err !=nil {
+		fields = append(fields, zap.Error(err))
 	}
 	return fields
 }

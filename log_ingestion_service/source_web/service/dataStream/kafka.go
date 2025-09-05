@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"sourceweb/config"
 	"sourceweb/constants"
+	logger "sourceweb/logging"
 	"sync"
 	"time"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -35,7 +37,7 @@ func NewKafkaService() (*KafkaService, error) {
 }
 
 func (k *KafkaService) Connect(ctx context.Context) error {
-  fmt.Println("kafka config:",getKafkaConfig() )
+	logger.Info("Kafka Config:", getKafkaConfig())
 	// Kafka connection logic
   kafkaConnector, err := kafka.NewProducer(getKafkaConfig())
 
