@@ -7,23 +7,19 @@ import (
 	"os"
 	"sourceweb/config"
 	datastream "sourceweb/service/dataStream"
-
+	logger "sourceweb/logging"
 	"github.com/gin-gonic/gin"
 )
 var Routev1 *gin.RouterGroup;
+
+
 func main(){
   r := gin.Default()
-  Routev1 = r.Group("/api/v1")
-  Routev1.GET("/health", func(ctx *gin.Context) {
-    ctx.JSON(200, gin.H{
-      "message": "health check passed",
-    })
-  })
-  envError := config.InitEnv()
-  if envError!=nil{
-    os.Exit(1)
-  }
+  config.InitEnv()
+
   initRoutes(Routev1)
+
+	logging.InitLogger()
 
   DataStreamService, dataStreamError := datastream.CreateDataStream(config.Config.MESSAGE_BROKER)
   
@@ -40,4 +36,14 @@ func main(){
 
   r.Run(fmt.Sprintf(":%s", config.Config.PORT))
 }
+func initDataStream(ctx context.Context){
+	DataStreamService, dataStreamError := datastream.CreateDataStream(config.Config.MESSAGE_BROKER)
 
+	if(dataStreamError !=nil){
+		logger.Error(fmt.Sprintf("Error initializing data stream: %e", dataStreamError)
+	}
+	connectErr := DataStreamService.Connect(ctx)
+	if connectErr!=nil{
+		logging.Logger.Fatal(fmt.Sprintf("error connecting to kafka %v", connectErr.Error()))
+	}
+}
