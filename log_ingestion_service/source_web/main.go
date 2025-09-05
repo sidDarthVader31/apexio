@@ -14,36 +14,23 @@ var Routev1 *gin.RouterGroup;
 
 
 func main(){
-  r := gin.Default()
-  config.InitEnv()
-
-  initRoutes(Routev1)
-
-	logging.InitLogger()
-
-  DataStreamService, dataStreamError := datastream.CreateDataStream(config.Config.MESSAGE_BROKER)
-  
-  connectErr := DataStreamService.Connect(context.Background())
-  if connectErr !=nil{
-    fmt.Println("error connecting to kafka", connectErr)
-    os.Exit(1)
-  }
-
-  if dataStreamError!=nil{
-    fmt.Println("error connecting to kafka:", dataStreamError)
-    os.Exit(1)
-  }
-
-  r.Run(fmt.Sprintf(":%s", config.Config.PORT))
+  r := gin.Default() //init gin
+  config.InitEnv() //init config 
+  initRoutes(Routev1) // init routes
+	logger.InitLogger() // init logger 
+	initDataStream(context.Background())
+  r.Run(fmt.Sprintf(":%s", config.Config.PORT)) 
 }
 func initDataStream(ctx context.Context){
 	DataStreamService, dataStreamError := datastream.CreateDataStream(config.Config.MESSAGE_BROKER)
 
-	if(dataStreamError !=nil){
-		logger.Error(fmt.Sprintf("Error initializing data stream: %e", dataStreamError)
+	if dataStreamError !=nil{
+		logger.Error("Error initializing data stream", dataStreamError)
+		os.Exit(1)
 	}
 	connectErr := DataStreamService.Connect(ctx)
 	if connectErr!=nil{
-		logging.Logger.Fatal(fmt.Sprintf("error connecting to kafka %v", connectErr.Error()))
+		logger.Error("Error connecting to data stream", connectErr, map[string]interface{} {"dataStream": config.Config.MESSAGE_BROKER})
+		os.Exit(1)
 	}
 }
