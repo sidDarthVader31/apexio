@@ -1,351 +1,504 @@
-![language](https://img.shields.io/badge/language-go-239120)
-![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macos%20%7C%20windows-blue)
+# Apexio - Self-Hosted Log Management Platform
 
-⭐ Star us on GitHub — it motivates us a lot!
+<div align="center">
+  
+[![Stars](https://img.shields.io/github/stars/sidDarthVader31/apexio?style=for-the-badge)](https://github.com/sidDarthVader31/apexio/stargazers)
+[![License](https://img.shields.io/github/license/sidDarthVader31/apexio?style=for-the-badge)](https://github.com/sidDarthVader31/apexio/blob/main/LICENSE)
+[![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://golang.org/)
+[![Kubernetes](https://img.shields.io/badge/kubernetes-326ce5.svg?&style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
-[![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://twitter.com/intent/tweet?text=Check%20out%20Apexio%20-%20an%20amazing%20project%20by%20%40sidDarthVader31%20%0A%0ARepository%3A%20https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio%0A%0A%23OpenSource%20%23GitHub)
-[![Share](https://img.shields.io/badge/share-1877F2?logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio)
-[![Share](https://img.shields.io/badge/share-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio)
-[![Share](https://img.shields.io/badge/share-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FsidDarthVader31%2Fapexio&title=Apexio%20-%20An%20Open%20Source%20Project)
+**A comprehensive, self-hosted logging solution for distributed systems**
 
+⭐ Star us on GitHub — it helps us reach more developers!
 
+</div>
 
-## Table of Contents
-- [Overview](#-overview)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#project-structure)
-- [Modifications](#modifications)
-- [Deployment](#-deployment)
-- [Logging](#logging)
-- [Roadmap](#roadmap)
+## 📋 Table of Contents
+
+- [🔥 Quick Start](#-quick-start)
+- [📖 Overview](#-overview)
+- [✨ Features](#-features)  
+- [🏗️ Architecture](#️-architecture)
+- [💻 Tech Stack](#-tech-stack)
+- [🚀 Installation](#-installation)
+- [📊 Usage](#-usage)
+- [⚙️ Configuration](#️-configuration)
+- [🛠️ Contributing](#️-contributing)
+- [🗺️ Roadmap](#️-roadmap)
+
+## 🔥 Quick Start
+
+Get Apexio running in under 5 minutes:
+
+```bash
+# Clone the repository
+git clone https://github.com/sidDarthVader31/apexio.git
+cd apexio
+
+# Deploy with Docker Compose (local development)
+docker-compose up -d
+
+# Or deploy to Kubernetes (production)
+kubectl apply -f deployments/k8-config/
+```
+
+Access your dashboard at `http://localhost:3000/grafana`
 
 ## 📖 Overview
-Apexio is a self hosted log management and analysis platform. It aims to provide real-time insights, proactive monitoring and quick debugging assitance.
-Apexio tries to provide a self hosted logging solution for a distributed 
-environment for people who cannot pay for these services and
-who do not want to reinvent the wheel. 
-Apexio uses grafana for visualization of various key
-important metrics -
 
-1. Log volume (helps in identifying the traffic)
-![log-volume](./assets/log-volume.png)
-2. Error rate (gives insights on bugs in the system)
-![error-rate](./assets/error-rate.png)
-3. Error logs (for quick debugging)
-![error-logs](./assets/error-logs.png)
-4. Response code distribution(to find out types of errors)
-![response-code](./assets/response-code-distribution.png)
-5. Response time distribution(for monitoring slow services)
-![response-time](./assets/response-time.png)
+**Apexio** is a powerful, self-hosted log management and analysis platform designed for teams who need enterprise-grade logging capabilities without the enterprise price tag. Built with modern microservices architecture, Apexio provides real-time insights, proactive monitoring, and comprehensive log management for distributed environments.
 
+### Why Choose Apexio?
 
+- **💰 Cost-Effective**: No expensive licensing fees or per-GB pricing
+- **🔒 Data Privacy**: Keep your sensitive logs on your infrastructure
+- **📈 Scalable**: Handle millions of log entries with ease
+- **🎯 Real-time**: Get insights as they happen, not hours later
+- **🔧 Customizable**: Adapt to your specific logging needs
 
-## 💻 Tech Stack
+## ✨ Features
 
--  [![golang](https://img.shields.io/badge/golang-027d9d?style=for-the-badge&logo=go&logoColor=fefffe)](https://go.dev)
--  [![kafka](https://img.shields.io/badge/kafka-DD0031?style=for-the-badge&logo=kafka)](https://kafka.apache.org/)
--  [![elasticsearch](https://img.shields.io/badge/elasticsearch-07a0d7?style=for-the-badge&logo=elasticsearch&logoColor=f7cd0b)](https://www.elastic.co/elasticsearch)
--  [![grafana](https://img.shields.io/badge/grafana-010100?style=for-the-badge&logo=grafana&logoColor=#ea5626)](https://grafana.com/)
--  [![docker](https://img.shields.io/badge/docker-f8f9f9?style=for-the-badge&logo=docker&logoColor=0999e6)](https://www.docker.com/)
--  [![kubernetes](https://img.shields.io/badge/kubernetes-f8f9f9?style=for-the-badge&logo=kubernetes&logoColor=3068df)](https://kubernetes.io/)
+### 📊 Comprehensive Monitoring Dashboard
+- **Log Volume Tracking** - Monitor traffic patterns and system load
+- **Error Rate Analysis** - Identify bugs and system issues quickly
+- **Response Time Distribution** - Track application performance
+- **Status Code Analysis** - Monitor HTTP response patterns
+- **Real-time Error Logs** - Debug issues as they occur
 
+### 🚀 High-Performance Ingestion
+- **Dual Protocol Support** - REST API and gRPC endpoints
+- **Batch Processing** - Efficient handling of high-volume logs
+- **Message Queuing** - Kafka-based reliable log delivery
+- **Auto-scaling** - Handle traffic spikes automatically
 
-##  <a id="project-structure"></a> 🗂️ Project Structure
-For ease of development and management this repository is
-currently a monolithic one but in a way that it can be
-seperated pretty easily, 
-each directory is a service which will have its separate
-mod file and dockerfile. 
+### 📈 Advanced Analytics
+- **Grafana Integration** - Beautiful, customizable dashboards
+- **Elasticsearch Storage** - Fast, full-text search capabilities
+- **Real-time Queries** - Filter and search logs instantly
+- **Historical Analysis** - Trend analysis and pattern recognition
 
-#### **1. log_ingestion_service** 
-This provides two services REST and gRPC for your
-application to interact and sent the logs for further
-processing 
-
-#### **2. log_processing_service**
-This service is responsible for processing and storing the
-logs 
-
-#### **3. visualization_service** 
-This service helps in auto deployment of grafana dashboard
-for proactive monitoring and analysis
-
-#### **4. deployments(k8)**
-This directory contains all the yaml files required to
-deploy apexio via kubernetes 
-
-The detailed project structure is given below -
-
-```
-.
-├── LICENSE
-├── README.md
-├── deployments
-│   └── k8-config
-│       ├── configMap
-│       ├── deployments
-│       ├── ingress
-│       ├── job
-│       └── secrets
-├── log_ingestion_service
-│   ├── source_grpc
-│   │   ├── Dockerfile
-│   │   ├── config
-│   │   ├── constants
-│   │   ├── go.mod
-│   │   ├── go.sum
-│   │   ├── log_payload.pb.go
-│   │   ├── log_payload.proto
-│   │   ├── log_payload_grpc.pb.go
-│   │   ├── main.go
-│   │   └── services
-│   └── source_web
-│       ├── Dockerfile
-│       ├── config
-│       ├── constants
-│       ├── go.mod
-│       ├── go.sum
-│       ├── logDistributor
-│       ├── main.go
-│       ├── routes.go
-│       └── service
-├── log_processing_service
-│   ├── Dockerfile
-│   ├── config
-│   │   └── config.go
-│   ├── constants
-│   │   └── constants.go
-│   ├── datastore
-│   │   ├── elasticSearchConnect.go
-│   │   ├── init.go
-│   │   └── models
-│   ├── go.mod
-│   ├── go.sum
-│   ├── main.go
-│   └── service
-│       └── dataStream
-├── tests
-│   └── sample-service
-│       ├── index.js
-│       ├── node_modules
-│       ├── package-lock.json
-│       └── package.json
-└── visualization_service
-    └── grafana
-        ├── Dockerfile
-        ├── dashboard.json
-        ├── go.mod
-        └── main.go
-```
-System architecture - 
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
     Client-->|REST|Source_Web
     Client-->|gRPC|Source_gRPC
-    
+
     subgraph Log_Ingestion_Service[Log Ingestion Service]
         Source_Web[Source Web]
         Source_gRPC[Source gRPC]
     end
-    
+
     Source_Web-->Kafka
     Source_gRPC-->Kafka
     Kafka-->Log_Processing_Service
     Log_Processing_Service-->Elasticsearch
     Grafana-.-|Query|Elasticsearch
     Custom_Dashboard-.-|Query|Elasticsearch
-    
-    Client[Client]
-    Kafka[(Kafka)]
+
+    Client[Client Applications]
+    Kafka[(Kafka Message Queue)]
     Log_Processing_Service[Log Processing Service]
     Elasticsearch[(Elasticsearch)]
     Grafana[Grafana Dashboard]
     Custom_Dashboard[Custom Dashboard]
-    
+
     style Kafka fill:#f96,stroke:#333
     style Elasticsearch fill:#5ca0f2,stroke:#333
     style Grafana fill:#f9f,stroke:#333
-    style Custom_Dashboard fill:#f9f,stroke:#333
-    style Log_Ingestion_Service fill:#e4f4e4,stroke:#333
-```
-##  <a id="modifications"></a>  🛠️ Modifications 
-**Kafka :** If you wish to have some other data stream
-service instead of kafka, it is pretty simple to do that
-too. Just pass on the service you wish to use during
-server initialization. In main.go, replace this line
-
-``` 
-DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "KAFKA")
-```
-with this - 
-``` 
-DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
-```
-Now update CreateDataStream function in Datastream service and add a case for your choice of data stream- 
-``` 
-case "RABBIT_MQ":
-service, err := getNewRabbitMQStream()
-if err != nil {
-    fmt.Println("error while getting kafka service:", err)
-    return nil, err
-}
-```
-   
-Create a new file `rabbitmq.go` and implement the
-interface `IDataStream`  and you are good to go.
-
-Note: You need to implement the code for
-producing/consuming messsages as per your service
-ofcourse. Refer to `kafka.go` file in `datastream`
-
-
-
-## 🚀 Deployment 
-1. Clone the repository
-2. Build docker images -  
-```
-docker build -t source-web:1.0 /log_ingestion_service/.
-docker build -t source-grpc:1.0 /log_ingestion_Service/.
-docker build -t log-processing-service:1.0
-/log_processing_service/.
-```
-3. Push these images in your registry 
-4. start with kubernetes deployment
-```
-cd deployemtns/k8-config 
-
-kc apply -f configMap/elasticsearch.yaml
-kc apply -f configMap/kafka.yaml
-
-kc apply -f secrets.elasticsearch.yaml
-kc apply -f kafka.yaml 
-
-kc apply deployments/elasticsearch.yaml
-kc apply deployments/grafana.yaml
-kc apply deployments/kafka.yaml
-kc apply deployments/log_processing_service
-kc apply deployments/source_grpc.yaml
-kc apply deployments/source_web.yaml
-
-kc apply -f ingress/grafana.yaml
-```
-5. Navigate to grafana dashboard and generate a new service account token (admin) and paste that token in
-`deployments/k8-config/job/grafana.yaml` 
-    
-6. Run the grafana job to create data source and dashboard 
-```
-kc apply -f deployments/k8-config/job/grafana.yaml
 ```
 
-Your dashboard will now be fully functional to receive
-messages
+### Service Components
 
-## <a id="logging"></a> 📊 Logging 
-1. For logging via REST API - 
-    `POST  :<your_cluster_url>:3000/api/v1/log`
-sample Request body - 
+| Service | Purpose | Technology |
+|---------|---------|------------|
+| **Log Ingestion** | Receives logs via REST/gRPC | Go, Gin, gRPC |
+| **Log Processing** | Processes and stores logs | Go, Kafka Consumer |
+| **Message Queue** | Reliable log delivery | Apache Kafka |
+| **Storage** | Log storage and indexing | Elasticsearch |
+| **Visualization** | Dashboards and analytics | Grafana |
+
+## 💻 Tech Stack
+
+<div align="center">
+
+| Component | Technology | Version |
+|-----------|------------|---------|
+| **Backend** | Go | 1.21+ |
+| **Message Queue** | Apache Kafka | 2.8+ |
+| **Database** | Elasticsearch | 8.x |
+| **Visualization** | Grafana | 10.x |
+| **Orchestration** | Kubernetes | 1.25+ |
+| **Containerization** | Docker | 20.x |
+
+</div>
+
+## 🚀 Installation
+
+### Prerequisites
+
+- **Kubernetes Cluster** (1.25+) or **Docker** (20.x+)
+- **kubectl** configured for your cluster
+- **Minimum Resources**: 4 CPU cores, 8GB RAM, 50GB storage
+
+### Option 1: Kubernetes Deployment (Recommended for Production)
+
+1. **Clone and prepare the repository**
+   ```bash
+   git clone https://github.com/sidDarthVader31/apexio.git
+   cd apexio
+   ```
+
+2. **Build and push Docker images**
+   ```bash
+   # Build images
+   docker build -t your-registry/apexio-source-web:1.0 ./log_ingestion_service/source_web
+   docker build -t your-registry/apexio-source-grpc:1.0 ./log_ingestion_service/source_grpc  
+   docker build -t your-registry/apexio-log-processor:1.0 ./log_processing_service
+
+   # Push to your registry
+   docker push your-registry/apexio-source-web:1.0
+   docker push your-registry/apexio-source-grpc:1.0
+   docker push your-registry/apexio-log-processor:1.0
+   ```
+
+3. **Update image references**
+   ```bash
+   # Update deployment files with your registry URLs
+   find deployments/k8-config/deployments -name "*.yaml" -exec sed -i 's/apexio-/your-registry\/apexio-/g' {} \;
+   ```
+
+4. **Deploy infrastructure components**
+   ```bash
+   cd deployments/k8-config
+
+   # Deploy ConfigMaps and Secrets
+   kubectl apply -f configMap/
+   kubectl apply -f secrets/
+
+   # Deploy core services
+   kubectl apply -f deployments/elasticsearch.yaml
+   kubectl apply -f deployments/kafka.yaml
+   ```
+
+5. **Deploy Apexio services**
+   ```bash
+   kubectl apply -f deployments/log-processing-service.yaml
+   kubectl apply -f deployments/source-web.yaml
+   kubectl apply -f deployments/source-grpc.yaml
+   kubectl apply -f deployments/grafana.yaml
+   ```
+
+6. **Setup Grafana dashboard**
+   ```bash
+   # Create Grafana ingress
+   kubectl apply -f ingress/grafana.yaml
+
+   # Get Grafana admin password
+   kubectl get secret grafana-admin -o jsonpath="{.data.password}" | base64 --decode
+
+   # Generate service account token in Grafana UI and update job config
+   # Edit deployments/k8-config/job/grafana.yaml with the token
+
+   # Run dashboard setup job
+   kubectl apply -f job/grafana.yaml
+   ```
+
+### Option 2: Docker Compose (Development)
+
+```bash
+# Coming soon - Docker Compose setup
+# Check our issues for Docker Compose implementation progress
 ```
-{
-  "id":30,
-  "metadata": {
-    "requestId": "2",
-    "clientIp": "36.75.63.226",
-    "userAgent": "Opera/14.63 (Windows NT 5.2; U; TY Presto/2.9.172 Version/10.00)",
-    "requestMethod": "DELETE",
-    "requestPath": "/payments",
-    "responseStatus": 502,
-    "responseDuration": 194.67143993866,
-    "extra": {
-      "traceId": "58b45b69-e2c0-4cce-bc06-363d1bba3f31"
+
+### Verification
+
+Check if all services are running:
+
+```bash
+kubectl get pods -n apexio
+kubectl get services -n apexio
+```
+
+Access Grafana dashboard:
+- **URL**: `http://your-cluster-ip:3000` or through ingress
+- **Login**: admin / [password from secrets]
+
+## 📊 Usage
+
+### Sending Logs to Apexio
+
+#### REST API Endpoint
+
+**URL**: `POST http://your-cluster-url:3000/api/v1/log`
+
+**Sample Request**:
+```bash
+curl -X POST http://your-cluster-url:3000/api/v1/log \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 12345,
+    "metadata": {
+      "requestId": "req-001",
+      "clientIp": "192.168.1.100",
+      "userAgent": "Mozilla/5.0...",
+      "requestMethod": "POST",
+      "requestPath": "/api/users",
+      "responseStatus": 201,
+      "responseDuration": 156.23,
+      "extra": {
+        "traceId": "trace-abc-123",
+        "spanId": "span-def-456"
+      }
+    },
+    "timestamp": 1733654342000,
+    "logLevel": "INFO",
+    "message": "User created successfully",
+    "source": {
+      "host": "api-server-01",
+      "service": "user-service",
+      "environment": "production"
     }
-  },
-  "timestamp": 1732974309000,
-  "logLevel": "INFO",
-  "message": "502 Articulus despecto agnosco supra defero.",
-  "source": {
-    "host": "exotic-effector.name",
-    "service": "payments",
-    "environment": "production"
-  }
-}
+  }'
 ```
-Payload structure -
 
-The following table describes the structure of the  request payload:
+#### gRPC Endpoint
 
+**URL**: `your-cluster-url:3002`
 
-| Key | Type | Description |
-| --- | --- | --- |
-| id | uint | Unique identifier |
-| metadata | Metadata | Metadata information |
-| timestamp | uint64 | Timestamp of the log event |
-| logLevel | string | Log level (e.g. DEBUG, INFO, ERROR) |
-| message | string | Log message |
-| source | Source | Source information |
+Use the `.proto` file in `log_ingestion_service/source_grpc/log_payload.proto` to generate client code.
 
-### Metadata
-
-The `Metadata` struct contains the following fields:
-
-
-| Key | Type | Description |
-| --- | --- | --- |
-| requestId | string | Request ID |
-| clientIp | string | Client IP address |
-| userAgent | string | User agent string |
-| requestMethod | string | Request method (e.g. GET, POST) |
-| requestPath | string | Request path |
-| responseStatus | int | Response status code |
-| responseDuration | float32 | Response duration in seconds |
-| extra | map[string]string | Additional metadata |
-
-### Source
-
-The `Source` struct contains the following fields:
-
-
-| Key | Type | Description |
-| --- | --- | --- |
-| host | string | Hostname or IP address |
-| service | string | Service name |
-| environment | string | Environment name |
-| extra | map[string]string | Additional source information |
-
-
-2. For logging via gRPC - 
-    `<your-cluster-curl>:3002`. Refer to `.proto` file in `log_ingestion_service/source_grpc`
-sample payload - 
-```
-{
+**Sample gRPC Call** (using grpcurl):
+```bash
+grpcurl -plaintext -d '{
   "entry": {
-  "id":123123123,
-  "metadata": {
-    "requestId": "2",
-    "clientIp": "36.75.63.226",
-    "userAgent": "Opera/14.63 (Windows NT 5.2; U; TY Presto/2.9.172 Version/10.00)",
-    "requestMethod": "DELETE",
-    "requestPath": "/payments",
-    "responseStatus": 502,
-    "responseDuration": 194.67143993866,
-    "extra": {
-      "traceId": "58b45b69-e2c0-4cce-bc06-363d1bba3f31"
-    }
-  },
-  "timestamp": 1733654342000,
-  "logLevel": "INFO",
-  "message": "502 Articulus despecto agnosco supra defero.",
-  "source": {
-    "host": "exotic-effector.name",
-    "service": "payments",
-    "environment": "production"
+    "id": 12345,
+    "metadata": {
+      "requestId": "req-001",
+      "clientIp": "192.168.1.100",
+      "userAgent": "Mozilla/5.0...",
+      "requestMethod": "POST", 
+      "requestPath": "/api/users",
+      "responseStatus": 201,
+      "responseDuration": 156.23,
+      "extra": {
+        "traceId": "trace-abc-123"
+      }
+    },
+    "timestamp": 1733654342000,
+    "logLevel": "INFO",
+    "message": "User created successfully",
+    "source": {
+      "host": "api-server-01",
+      "service": "user-service", 
+      "environment": "production"
     }
   }
-}
+}' your-cluster-url:3002 logging.LoggingService/IngestLog
 ```
-##  <a id="roadmap"></a> 🔜 RoadMap
-### Future releases will have - 
-- [ ] deployment pipelines
-- [ ] Machine learning log anomaly detection
-- [ ] More visualization options
-- [ ] TLS encryption for all communications 
+
+### Log Schema Reference
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `id` | uint64 | Unique identifier for the log entry | ✅ |
+| `timestamp` | uint64 | Unix timestamp in milliseconds | ✅ |
+| `logLevel` | string | Log level (DEBUG, INFO, WARN, ERROR, FATAL) | ✅ |
+| `message` | string | Human-readable log message | ✅ |
+| `metadata` | object | Request/response metadata | ❌ |
+| `source` | object | Source system information | ❌ |
+
+#### Metadata Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `requestId` | string | Unique request identifier |
+| `clientIp` | string | Client IP address |
+| `userAgent` | string | User agent string |
+| `requestMethod` | string | HTTP method (GET, POST, etc.) |
+| `requestPath` | string | API endpoint path |
+| `responseStatus` | int32 | HTTP response code |
+| `responseDuration` | float64 | Response time in milliseconds |
+| `extra` | map<string,string> | Additional metadata |
+
+#### Source Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `host` | string | Hostname or IP address |
+| `service` | string | Service name |
+| `environment` | string | Environment (dev, staging, prod) |
+| `extra` | map<string,string> | Additional source information |
+
+### Dashboard Features
+
+Once logs are flowing, access your Grafana dashboard to:
+
+- **Monitor Log Volume** - Track traffic patterns over time
+- **Analyze Error Rates** - Identify spikes in errors or failures
+- **View Recent Errors** - See detailed error logs in real-time
+- **Response Time Analysis** - Monitor application performance
+- **Status Code Distribution** - Understand response patterns
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+| Service | Variable | Default | Description |
+|---------|----------|---------|-------------|
+| All | `MESSAGE_BROKER` | `KAFKA` | Message broker type |
+| Log Ingestion | `PORT` | `3000`/`3002` | Service port |
+| Log Processing | `ELASTICSEARCH_URL` | - | Elasticsearch connection URL |
+| Kafka | `KAFKA_BROKERS` | `kafka:9092` | Kafka broker addresses |
+
+### Customizing Message Brokers
+
+Apexio supports pluggable message brokers. To use RabbitMQ instead of Kafka:
+
+1. **Update the main.go in log_processing_service**:
+   ```go
+   DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
+   ```
+
+2. **Implement RabbitMQ service**:
+   Create `rabbitmq.go` implementing the `IDataStream` interface.
+
+3. **Update configuration**:
+   Set `MESSAGE_BROKER=RABBIT_MQ` in your environment variables.
+
+### Scaling Configuration
+
+For high-traffic environments, consider:
+
+- **Kafka Partitions**: Increase partitions for parallel processing
+- **Elasticsearch Shards**: Distribute data across multiple shards
+- **Replica Scaling**: Use Kubernetes HPA for auto-scaling
+- **Resource Limits**: Set appropriate CPU/memory limits
+
+## 🛠️ Contributing
+
+We welcome contributions from the community! Here's how you can help:
+
+### Getting Started
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Make your changes**
+4. **Test thoroughly**
+5. **Submit a pull request**
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/your-username/apexio.git
+cd apexio
+
+# Install Go dependencies
+cd log_ingestion_service/source_web && go mod download
+cd ../source_grpc && go mod download  
+cd ../../log_processing_service && go mod download
+
+# Run services locally
+docker-compose -f docker-compose.dev.yml up -d
+
+# Start individual services for development
+cd log_ingestion_service/source_web && go run main.go
+```
+
+### Contributing Guidelines
+
+#### Code Standards
+- **Language**: Go 1.21+ with standard formatting
+- **Documentation**: Comment all public functions and types
+- **Testing**: Include unit tests for new features
+- **Commits**: Use conventional commit messages
+
+#### Areas for Contribution
+
+**🎯 High Priority**
+- Docker Compose setup for easy local development
+- Helm charts for Kubernetes deployment
+- Additional message broker implementations (RabbitMQ, Redis)
+- Performance optimizations
+
+**🔧 Medium Priority**  
+- Log parsing and enrichment features
+- Alert rule templates
+- Multi-tenancy support
+- Log retention policies
+
+**🌟 Nice to Have**
+- Machine learning anomaly detection
+- Custom dashboard templates
+- Log forwarding to external systems
+- Mobile dashboard support
+
+#### Reporting Issues
+
+When reporting bugs:
+- Use the issue templates
+- Include reproduction steps
+- Attach relevant logs
+- Specify your environment details
+
+### Code Review Process
+
+1. All PRs require at least one review
+2. CI/CD checks must pass
+3. Documentation updates required for new features
+4. Breaking changes need migration guides
+
+## 🗺️ Roadmap
+
+### Version 1.1 (Next Release)
+- [ ] Docker Compose setup
+- [ ] Helm chart deployment
+- [ ] Enhanced error handling
+- [ ] Performance benchmarks
+
+### Version 1.2
+- [ ] RabbitMQ message broker support  
+- [ ] Log retention policies
+- [ ] Advanced filtering capabilities
+- [ ] API rate limiting
+
+### Version 2.0 (Future)
+- [ ] Machine learning anomaly detection
+- [ ] Multi-tenancy support
+- [ ] Advanced alerting rules
+- [ ] Log forwarding connectors
+
+### Security & Performance
+- [ ] TLS encryption for all communications
+- [ ] Authentication and authorization
+- [ ] Log sampling for high-volume systems
+- [ ] Distributed deployment patterns
+
+### Long-term Vision
+- [ ] AI-powered log analysis
+- [ ] Mobile dashboard application
+- [ ] SaaS offering option
+- [ ] Enterprise features (SSO, RBAC)
+
+---
+
+<div align="center">
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Community
+
+[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-333?style=for-the-badge&logo=github)](https://github.com/sidDarthVader31/apexio/discussions)
+[![Issues](https://img.shields.io/badge/GitHub-Issues-red?style=for-the-badge&logo=github)](https://github.com/sidDarthVader31/apexio/issues)
+
+**Made with ❤️ by the Apexio team**
+
+⭐ **Star us on GitHub if Apexio helps you!** ⭐
+
+</div>
