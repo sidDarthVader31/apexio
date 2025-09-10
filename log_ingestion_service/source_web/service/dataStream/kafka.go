@@ -9,7 +9,6 @@ import (
 	logger "sourceweb/logging"
 	"sync"
 	"time"
-
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -25,8 +24,10 @@ type batchProcess struct {
 	buffer      map[string][][]byte
 	bufferMu    sync.Mutex
 	done        chan struct{}
-	logChan     chan logChanStruct
+	logChan     chan logChanStruct 
+	logger 			*logger.Logger
 }
+
 
 type logChanStruct struct {
 	topicName string
@@ -43,11 +44,11 @@ func (k *KafkaService) Connect(ctx context.Context) error {
 	kafkaConnector, err := kafka.NewProducer(getKafkaConfig())
 
 	if err != nil {
-		fmt.Printf("error connecting to kafka %v, shutting down the server\n", err)
+		k.logger.Error("error connecting to kafka, shutting down the server", err)
 		k.batchProcess = batchProcess{}
 		return err
 	} else {
-		fmt.Println("connected to kafka ", kafkaConnector)
+		k.logger.Info("successfully logged to kafka", kafkaConnector)
 	}
 
 	//create a batchprocessor
@@ -58,6 +59,7 @@ func (k *KafkaService) Connect(ctx context.Context) error {
 		buffer:      make(map[string][][]byte, constants.BatchSize),
 		logChan:     make(chan logChanStruct, constants.BatchSize*2), // buffer channel to handle spike in traffic
 		done:        make(chan struct{}),
+		logger: 			k.logger,
 	}
 	go k.batchProcess.processLogs()
 	return nil
@@ -84,7 +86,7 @@ func (b *batchProcess) processLogs() {
 	ticker := time.NewTicker(b.batchWindow)
 	defer func() {
 		ticker.Stop()
-		fmt.Println("Exiting processLogs goroutine.")
+		b.logger.Info("Exiting processLogs go routine")
 	}()
 	for {
 		select {
@@ -137,10 +139,8 @@ func (b *batchProcess) flush(topic string) {
 
 	for _, v := range topicBuffer {
 		if v == nil {
-			fmt.Println("v is nil")
 			continue
 		}
-		fmt.Println("sending message:", len(v))
 		err := b.producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{
 				Topic:     &topic,
@@ -148,10 +148,9 @@ func (b *batchProcess) flush(topic string) {
 			},
 			Value: v,
 		}, nil)
-		fmt.Println("message sent")
 
 		if err != nil {
-			fmt.Printf("error producing message to topic %s: %v\n", topic, err)
+			b.logger.Error(fmt.Sprint("error producing message to topic %s:", topic), err)
 		}
 	}
 	// Remove the flushed topic's buffer
