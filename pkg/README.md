@@ -1,15 +1,12 @@
 # Apexio packages (Phase 2)
 
-Shared contracts for the redesigned pipeline. No network I/O in this phase —
-Redpanda/ClickHouse types are thin stubs; memory backends power unit tests.
-
-## Layout
+Shared contracts for the redesigned pipeline.
 
 | Package | Role |
 |---------|------|
 | [`pkg/schema`](schema/) | Canonical `LogEvent`, REST + OTLP-like mapping, broker JSON codec |
-| [`pkg/broker`](broker/) | `Broker` / `Publisher` / `Consumer` + `Memory` + `Redpanda` stub |
-| [`pkg/store`](store/) | `Store.WriteBatch` + `Memory` + `ClickHouse` stub |
+| [`pkg/broker`](broker/) | `Broker` / `Publisher` / `Consumer` + `Memory` + **Redpanda** |
+| [`pkg/store`](store/) | `Store.WriteBatch` + `Memory` + **ClickHouse** |
 
 ## Canonical event
 

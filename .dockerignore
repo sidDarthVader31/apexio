@@ -1,0 +1,15 @@
+.git
+**/*_test.go
+**/node_modules
+**/.env
+**/sourceweb
+**/*.png
+assets
+tests
+visualization_service
+log_ingestion_service
+log_processing_service
+deployments
+*.md
+!go.mod
+!go.sum

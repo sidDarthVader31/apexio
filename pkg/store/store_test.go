@@ -67,23 +67,13 @@ func TestMemoryImplementsStore(t *testing.T) {
 	var _ store.Store = store.NewMemory()
 }
 
-func TestClickHouseStub(t *testing.T) {
+func TestClickHouseConfigValidation(t *testing.T) {
 	if _, err := store.NewClickHouse(store.ClickHouseConfig{}); err == nil {
-		t.Fatal("expected error for empty DSN")
+		t.Fatal("expected error for empty DSN/Addr")
 	}
-	ch, err := store.NewClickHouse(store.ClickHouseConfig{DSN: "clickhouse://default@localhost:9000/apexio"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ch.Close()
-
-	var _ store.Store = ch
-	if ch.Config().Database != "apexio" || ch.Config().Table != "logs" {
-		t.Fatalf("defaults=%+v", ch.Config())
-	}
-
-	err = ch.WriteBatch(context.Background(), []schema.LogEvent{sampleEvent(t)})
-	if !errors.Is(err, store.ErrNotImplemented) {
-		t.Fatalf("expected ErrNotImplemented, got %v", err)
+	// Construction without a live server fails on ping — that is expected here.
+	_, err := store.NewClickHouse(store.ClickHouseConfig{Addr: "127.0.0.1:1"})
+	if err == nil {
+		t.Fatal("expected ping/open failure against closed port")
 	}
 }
