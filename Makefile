@@ -2,7 +2,7 @@ COMPOSE_FILE := deploy/compose/docker-compose.yml
 COMPOSE := docker compose -f $(COMPOSE_FILE)
 
 .PHONY: up down logs ps restart clean-volumes \
-	test test-unit test-contracts test-infra test-pipeline test-otlp test-grafana test-auth test-k8s test-k8s-e2e test-e2e \
+	test test-unit test-contracts test-infra test-pipeline test-otlp test-grafana test-auth test-k8s test-k8s-e2e test-e2e test-docs \
 	k8s-apply k8s-delete
 
 ## Start stack (infra + gateway + writer); rebuild app images
@@ -29,8 +29,8 @@ restart:
 clean-volumes:
 	$(COMPOSE) down -v
 
-## Fast default: unit + contract layout + k8s manifest validation
-test: test-unit test-contracts test-k8s
+## Fast default: unit + contract layout + k8s manifest validation + docs
+test: test-unit test-contracts test-k8s test-docs
 
 ## Go unit and race tests
 test-unit:
@@ -63,6 +63,10 @@ test-auth:
 ## Kubernetes manifest validation (no cluster required)
 test-k8s:
 	./scripts/test-k8s.sh
+
+## Documentation hygiene (no legacy paths, README smoke checks)
+test-docs:
+	./scripts/test-docs.sh
 
 ## Kubernetes cluster smoke (requires kind or minikube; tears down namespace/cluster on exit)
 test-k8s-e2e:

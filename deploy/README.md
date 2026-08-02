@@ -1,8 +1,10 @@
-# Apexio deploy
+# 🚢 Apexio deploy
+
+---
 
 Self-hosted pipeline: **gateway** → **Redpanda** → **writer** → **ClickHouse**, plus **Grafana**.
 
-## Quick start
+## ⚡ Quick start
 
 From the repository root:
 
@@ -22,7 +24,7 @@ make test-k8s-e2e      # cluster smoke (deletes namespace; minikube/kind if crea
 
 E2E tests register an `EXIT` trap and run `docker compose down -v` or `kubectl delete namespace apexio` (and delete the kind/minikube cluster when the test created it).
 
-Individual component tests:
+### Individual component tests
 
 ```bash
 make test-unit         # Go unit/race tests
@@ -35,13 +37,17 @@ make test-auth         # API-key middleware + writer metrics
 make test-k8s          # kubectl kustomize validation
 ```
 
-### Grafana dashboards
+---
+
+## 📊 Grafana dashboards
 
 After `make up`, open [http://127.0.0.1:3000/d/apexio-logs/apexio-logs](http://127.0.0.1:3000/d/apexio-logs/apexio-logs) (`admin` / `admin`).
 
 Panels: log volume, error rate, recent errors, response-time distribution, status-code distribution — all backed by `apexio.logs` in ClickHouse. Dashboards are provisioned from [`deploy/grafana/provisioning/dashboards/json/apexio-logs.json`](grafana/provisioning/dashboards/json/apexio-logs.json); no manual token or Job step.
 
-### Ingest via REST
+---
+
+## 📥 Ingest via REST
 
 ```bash
 curl -sS -X POST http://127.0.0.1:18080/api/v1/log \
@@ -66,7 +72,9 @@ curl -sS -X POST http://127.0.0.1:18080/api/v1/log \
   }'
 ```
 
-### Ingest via OTLP (HTTP)
+---
+
+## 📡 Ingest via OTLP (HTTP)
 
 Use the sample client:
 
@@ -82,7 +90,9 @@ OTLP gRPC: port `4317` (standard OTLP logs export).
 Gateway metrics: `GET /metrics`.  
 Writer metrics: `GET http://127.0.0.1:8081/metrics` (batch flushes, events written, errors).
 
-## Bring your own auth / broker
+---
+
+## 🔐 Bring your own auth / broker
 
 Apexio is a **clone-and-adapt backend** — auth and messaging are extension points, not a fixed product surface.
 
@@ -142,7 +152,9 @@ Reset data volumes:
 make clean-volumes
 ```
 
-## Ports
+---
+
+## 🔌 Ports
 
 | Service    | Host port | Purpose                          |
 |------------|-----------|----------------------------------|
@@ -156,7 +168,9 @@ make clean-volumes
 | ClickHouse | 9000      | Native protocol                  |
 | Grafana    | 3000      | UI + provisioned **Apexio Logs** dashboard (`/d/apexio-logs`) |
 
-## Layout
+---
+
+## 📁 Layout
 
 - [`compose/docker-compose.yml`](compose/docker-compose.yml) — stack definition
 - [`k8s/`](k8s/) — Kubernetes manifests (Kustomize) for kind/minikube
@@ -164,7 +178,9 @@ make clean-volumes
 - [`clickhouse/init/01_schema.sql`](clickhouse/init/01_schema.sql) — `apexio.logs` table
 - [`grafana/provisioning/`](grafana/provisioning/) — ClickHouse datasource + **Apexio Logs** dashboard (as code)
 
-## Notes
+---
+
+## 📝 Notes
 
 - ClickHouse init SQL runs only on first start of an empty data volume.
 - Grafana installs the ClickHouse plugin on first start (`GF_INSTALL_PLUGINS`); allow ~30–60s before datasource API checks.

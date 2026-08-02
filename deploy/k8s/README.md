@@ -1,24 +1,28 @@
-# Kubernetes
+# ☸️ Kubernetes
 
-Kustomize manifests for the Apexio stack on **kind** or **minikube**. This path replaces the legacy [`deployments/k8-config`](../../deployments/k8-config) for the modern pipeline.
+---
 
-## Stack
+Kustomize manifests for the Apexio stack on **kind** or **minikube**.
+
+## 📦 Stack
 
 | Workload   | Kind        | Service        | Notes                          |
 |------------|-------------|----------------|--------------------------------|
-| Redpanda   | StatefulSet | `redpanda:9092` (headless) | PVC `redpanda-data`; RPC listens on `0.0.0.0`, advertises pod DNS |
+| Redpanda   | StatefulSet | `redpanda:9092` (headless) | PVC `redpanda-data`; RPC on `0.0.0.0`, advertises pod DNS |
 | ClickHouse | StatefulSet | `clickhouse`   | Init SQL from ConfigMap        |
 | Grafana    | Deployment  | NodePort 30030 | Provisioned dashboards         |
 | Gateway    | Deployment  | NodePort 30080 / 30417 | Build image locally    |
 | Writer     | Deployment  | NodePort 30081 | Build image locally            |
 
-## Prerequisites
+## ✅ Prerequisites
 
 - `kubectl` 1.28+
 - `docker` (build gateway/writer images)
 - **kind** or **minikube** for cluster deployment
 
-## Quick start (kind)
+---
+
+## 🚀 Quick start (kind)
 
 From the repository root:
 
@@ -39,7 +43,7 @@ kubectl apply -k deploy
 kubectl -n apexio wait --for=condition=ready pod --all --timeout=300s
 ```
 
-### Smoke test
+### 🔍 Smoke test
 
 ```bash
 kubectl -n apexio port-forward svc/gateway 18080:8080 &
@@ -63,7 +67,9 @@ Grafana: `kubectl -n apexio port-forward svc/grafana 3000:3000` → [http://127.
 
 Or use NodePorts on kind: gateway `http://localhost:30080`, Grafana `http://localhost:30030`.
 
-## Minikube
+---
+
+## 🖥️ Minikube
 
 ```bash
 minikube start
@@ -76,7 +82,9 @@ minikube service -n apexio gateway --url
 
 With `minikube docker-env`, images are built into the minikube daemon (no separate load step).
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 Shared non-secret settings: ConfigMap `apexio-config` (`GATEWAY_API_KEY`, `GATEWAY_API_KEY_HEADER`, broker/ClickHouse FQDNs). Patch before apply or use a Kustomize overlay:
 
@@ -88,7 +96,9 @@ kubectl -n apexio rollout restart deployment/gateway
 
 ClickHouse schema and Grafana provisioning are generated from the same files as Docker Compose (`deploy/clickhouse/init`, `deploy/grafana/provisioning`).
 
-## Teardown
+---
+
+## 🧹 Teardown
 
 ```bash
 kubectl delete -k deploy
@@ -116,7 +126,9 @@ kubectl -n apexio delete pvc redpanda-data
 kubectl -n apexio delete pod redpanda-0
 ```
 
-## Verify
+---
+
+## 🧪 Verify
 
 ```bash
 make test-k8s          # manifest validation only (fast)
