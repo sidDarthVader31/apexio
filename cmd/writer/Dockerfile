@@ -8,7 +8,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /writer ./cmd/writer
 
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates wget
 COPY --from=build /writer /usr/local/bin/writer
 EXPOSE 8081
 ENTRYPOINT ["/usr/local/bin/writer"]

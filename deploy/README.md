@@ -20,6 +20,7 @@ make test-phase2   # contracts
 make test-phase3   # REST vertical slice
 make test-phase4   # OTLP + sample client
 make test-phase5   # Grafana dashboards (ClickHouse)
+make test-phase6   # Auth, writer batching, broker docs
 ```
 
 ### Grafana dashboards (Phase 5)
@@ -66,7 +67,49 @@ go run ./examples/sample-client -mode both
 OTLP HTTP endpoint: `POST /v1/logs` with `Content-Type: application/x-protobuf`.  
 OTLP gRPC: port `4317` (standard OTLP logs export).
 
-Gateway metrics: `GET /metrics`.
+Gateway metrics: `GET /metrics`.  
+Writer metrics: `GET http://127.0.0.1:8081/metrics` (batch flushes, events written, errors).
+
+## Bring your own auth / broker
+
+Apexio is a **clone-and-adapt backend** — auth and messaging are extension points, not a fixed product surface.
+
+### Auth
+
+Optional API-key middleware lives in [`pkg/auth`](../pkg/auth/). It is **disabled by default** (`GATEWAY_API_KEY` empty).
+
+```bash
+cp .env.example .env
+# edit .env
+export GATEWAY_API_KEY=your-secret
+export GATEWAY_API_KEY_HEADER=X-API-Key   # optional, default shown
+make up
+```
+
+Clients must send the header on ingest routes (`POST /api/v1/log`, `POST /v1/logs`). Health (`/healthz`) and metrics (`/metrics`) stay open.
+
+Replace or chain middleware in [`cmd/gateway/main.go`](../cmd/gateway/main.go) for JWT, mTLS, or an org IdP — the `auth.Middleware` type is a thin `func(http.Handler) http.Handler` wrapper.
+
+OTLP gRPC (`:4317`) is unauthenticated in the default build; terminate TLS and auth at a proxy or extend the gRPC server if you need it.
+
+### Broker
+
+Default: Redpanda via [`pkg/broker/redpanda.go`](../pkg/broker/redpanda.go). Delivery policy, acks, and backpressure are documented in [`pkg/broker/README.md`](../pkg/broker/README.md).
+
+Implement `broker.Broker` (see `memory.go` for a test double) and wire it in `cmd/gateway` and `cmd/writer` to swap Kafka, NATS, RabbitMQ, etc.
+
+### Writer tuning
+
+Batch insert settings (env or `.env`):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `WRITER_BATCH_SIZE` | `50` | Max events per ClickHouse flush |
+| `WRITER_FLUSH_INTERVAL` | `1s` | Time-based flush |
+| `WRITER_MAX_RETRIES` | `3` | Retries on batch write failure |
+| `WRITER_RETRY_BACKOFF` | `200ms` | Delay between retries |
+
+Shutdown flushes the in-flight batch before exit.
 
 Then query ClickHouse:
 
@@ -104,6 +147,7 @@ make clean-volumes
 ## Layout
 
 - [`compose/docker-compose.yml`](compose/docker-compose.yml) — stack definition
+- [`../.env.example`](../.env.example) — configuration template (copy to `.env`, never commit secrets)
 - [`clickhouse/init/01_schema.sql`](clickhouse/init/01_schema.sql) — `apexio.logs` table
 - [`grafana/provisioning/`](grafana/provisioning/) — ClickHouse datasource + **Apexio Logs** dashboard (as code)
 

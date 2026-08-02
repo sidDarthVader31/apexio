@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sidDarthVader31/apexio/pkg/auth"
 	"github.com/sidDarthVader31/apexio/pkg/broker"
 	"github.com/sidDarthVader31/apexio/pkg/schema"
 )
@@ -48,8 +49,13 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.Handle("GET /metrics", metrics.handler())
-	mux.Handle("POST /api/v1/log", &ingestHandler{pub: pub, metrics: metrics})
-	mux.Handle("POST /v1/logs", &otlpHTTPHandler{pub: pub, metrics: metrics})
+
+	apiKey := envOr("GATEWAY_API_KEY", "")
+	apiHeader := envOr("GATEWAY_API_KEY_HEADER", "X-API-Key")
+	ingestMW := auth.APIKey(apiHeader, apiKey)
+
+	mux.Handle("POST /api/v1/log", auth.Chain(&ingestHandler{pub: pub, metrics: metrics}, ingestMW))
+	mux.Handle("POST /v1/logs", auth.Chain(&otlpHTTPHandler{pub: pub, metrics: metrics}, ingestMW))
 
 	srv := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	go func() {

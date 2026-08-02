@@ -99,6 +99,8 @@ services:
     environment:
       GATEWAY_ADDR: ":8080"
       GATEWAY_OTLP_GRPC_ADDR: ":4317"
+      GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
+      GATEWAY_API_KEY_HEADER: ${GATEWAY_API_KEY_HEADER:-X-API-Key}
       REDPANDA_BROKERS: redpanda:9092
       REDPANDA_CLIENT_ID: apexio-gateway
       LOG_TOPIC: logs.ingestion.raw.v1
@@ -132,6 +134,10 @@ services:
       CLICKHOUSE_DATABASE: apexio
       CLICKHOUSE_TABLE: logs
       CLICKHOUSE_USER: default
+      WRITER_BATCH_SIZE: ${WRITER_BATCH_SIZE:-50}
+      WRITER_FLUSH_INTERVAL: ${WRITER_FLUSH_INTERVAL:-1s}
+      WRITER_MAX_RETRIES: ${WRITER_MAX_RETRIES:-3}
+      WRITER_RETRY_BACKOFF: ${WRITER_RETRY_BACKOFF:-200ms}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/healthz | grep -q ok"]
       interval: 5s
