@@ -21,5 +21,8 @@
 go.work
 go.work.sum
 node_modules
-# env file
+# env files (use .env.example as template)
+.env
+.env.*
+!.env.example
 .DS_Store

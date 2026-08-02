@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -22,15 +23,11 @@ func main() {
 	healthAddr := envOr("WRITER_HEALTH_ADDR", ":8081")
 	chAddr := envOr("CLICKHOUSE_ADDR", "localhost:9000")
 
-	bus, err := broker.NewRedpanda(broker.RedpandaConfig{
+	busCfg := broker.RedpandaConfig{
 		Brokers:  brokers,
 		ClientID: envOr("REDPANDA_CLIENT_ID", "apexio-writer"),
 		GroupID:  envOr("REDPANDA_GROUP_ID", "apexio-writer"),
-	})
-	if err != nil {
-		log.Fatalf("broker: %v", err)
 	}
-	defer bus.Close()
 
 	db, err := store.NewClickHouse(store.ClickHouseConfig{
 		Addr:     chAddr,
@@ -44,44 +41,40 @@ func main() {
 	}
 	defer db.Close()
 
-	proc := &processor{store: db}
+	metrics := &writerMetrics{}
+	proc := newBatchProcessor(db, batchConfig{
+		BatchSize:     envInt("WRITER_BATCH_SIZE", 50),
+		FlushInterval: envDuration("WRITER_FLUSH_INTERVAL", time.Second),
+		MaxRetries:    envInt("WRITER_MAX_RETRIES", 3),
+		RetryBackoff:  envDuration("WRITER_RETRY_BACKOFF", 200*time.Millisecond),
+	}, metrics)
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	mux.Handle("GET /metrics", metrics.handler())
 	healthSrv := &http.Server{Addr: healthAddr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	go func() {
-		log.Printf("writer health on %s", healthAddr)
+		log.Printf("writer health/metrics on %s", healthAddr)
 		if err := healthSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("health listen: %v", err)
 		}
 	}()
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	log.Printf("writer consuming topic=%s brokers=%v clickhouse=%s", topic, brokers, chAddr)
-	err = bus.Subscribe(ctx, []string{topic}, proc.handle)
+	log.Printf("writer consuming topic=%s brokers=%v clickhouse=%s batch=%d flush=%s",
+		topic, brokers, chAddr, proc.cfg.BatchSize, proc.cfg.FlushInterval)
+	err = runConsumer(ctx, busCfg, topic, proc)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		log.Fatalf("subscribe: %v", err)
 	}
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_ = healthSrv.Shutdown(shutdownCtx)
-}
-
-type processor struct {
-	store store.Store
-}
-
-func (p *processor) handle(ctx context.Context, msg broker.Message) error {
-	ev, err := schema.UnmarshalEvent(msg.Value)
-	if err != nil {
-		return err
-	}
-	return p.store.WriteBatch(ctx, []schema.LogEvent{ev})
 }
 
 func envOr(key, fallback string) string {
@@ -89,4 +82,28 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func envInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return n
+}
+
+func envDuration(key string, fallback time.Duration) time.Duration {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return fallback
+	}
+	return d
 }

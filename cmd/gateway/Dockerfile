@@ -8,7 +8,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /gateway ./cmd/gateway
 
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates wget
 COPY --from=build /gateway /usr/local/bin/gateway
-EXPOSE 8080
+EXPOSE 8080 4317
 ENTRYPOINT ["/usr/local/bin/gateway"]
