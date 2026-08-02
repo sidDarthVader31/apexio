@@ -17,10 +17,11 @@ Verify:
 ```bash
 make test-phase1   # infra
 make test-phase2   # contracts
-make test-phase3   # unit + E2E vertical slice
+make test-phase3   # REST vertical slice
+make test-phase4   # OTLP + sample client
 ```
 
-### Ingest a log (Phase 3)
+### Ingest via REST
 
 ```bash
 curl -sS -X POST http://127.0.0.1:18080/api/v1/log \
@@ -45,6 +46,21 @@ curl -sS -X POST http://127.0.0.1:18080/api/v1/log \
   }'
 ```
 
+### Ingest via OTLP (HTTP)
+
+Use the sample client:
+
+```bash
+go run ./examples/sample-client -mode otlp -message "hello otlp" -service demo
+# or both REST + OTLP
+go run ./examples/sample-client -mode both
+```
+
+OTLP HTTP endpoint: `POST /v1/logs` with `Content-Type: application/x-protobuf`.  
+OTLP gRPC: port `4317` (standard OTLP logs export).
+
+Gateway metrics: `GET /metrics`.
+
 Then query ClickHouse:
 
 ```bash
@@ -68,7 +84,8 @@ make clean-volumes
 
 | Service    | Host port | Purpose                          |
 |------------|-----------|----------------------------------|
-| Gateway    | 18080     | REST ingest `POST /api/v1/log`   |
+| Gateway    | 18080     | REST `/api/v1/log`, OTLP HTTP `/v1/logs`, `/metrics` |
+| Gateway    | 4317      | OTLP gRPC logs export                                |
 | Writer     | 8081      | Health only                      |
 | Redpanda   | 19092     | Kafka API                        |
 | Redpanda   | 18081     | Schema Registry                  |
