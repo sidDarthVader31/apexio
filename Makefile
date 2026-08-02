@@ -1,7 +1,7 @@
 COMPOSE_FILE := deploy/compose/docker-compose.yml
 COMPOSE := docker compose -f $(COMPOSE_FILE)
 
-.PHONY: up down logs ps test-phase1 test-phase2 test-phase3 test-phase4 restart clean-volumes
+.PHONY: up down logs ps test-phase1 test-phase2 test-phase3 test-phase4 test-phase5 restart clean-volumes
 
 ## Start stack (infra + gateway + writer); rebuild app images
 up:
@@ -42,3 +42,7 @@ test-phase3:
 ## Run Phase 4 OTLP + sample-client tests
 test-phase4:
 	./scripts/test-phase4.sh
+
+## Run Phase 5 Grafana dashboard provisioning tests
+test-phase5:
+	./scripts/test-phase5.sh

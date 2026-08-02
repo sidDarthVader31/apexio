@@ -1,0 +1,196 @@
+#!/usr/bin/env bash
+# Phase 5 tests: Grafana dashboards provisioned from ClickHouse queries.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT}"
+
+COMPOSE_FILE="${ROOT}/deploy/compose/docker-compose.yml"
+COMPOSE=(docker compose -f "${COMPOSE_FILE}")
+DASHBOARD_FILE="${ROOT}/deploy/grafana/provisioning/dashboards/json/apexio-logs.json"
+GATEWAY="${GATEWAY_URL:-http://127.0.0.1:18080}"
+GRAFANA="${GRAFANA_URL:-http://127.0.0.1:3000}"
+GRAFANA_AUTH="admin:admin"
+
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+NC=$'\033[0m'
+
+pass() { echo -e "${GREEN}PASS${NC}: $*"; }
+fail() { echo -e "${RED}FAIL${NC}: $*"; exit 1; }
+info() { echo -e "${YELLOW}INFO${NC}: $*"; }
+
+SEED_PREFIX="phase5-seed-$(date +%s)-$$"
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
+}
+
+test_dashboard_file() {
+  [[ -f "${DASHBOARD_FILE}" ]] || fail "missing dashboard ${DASHBOARD_FILE}"
+  python3 - <<'PY' "${DASHBOARD_FILE}"
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    d = json.load(f)
+assert d.get("uid") == "apexio-logs", d.get("uid")
+assert d.get("title") == "Apexio Logs"
+panels = d.get("panels", [])
+assert len(panels) == 5, len(panels)
+titles = {p["title"] for p in panels}
+expected = {
+    "Log Volume Over Time",
+    "Error Rate",
+    "Recent Errors",
+    "Response Time Distribution",
+    "Status Code Distribution",
+}
+assert expected <= titles, titles
+for p in panels:
+    uid = p.get("datasource", {}).get("uid")
+    assert uid == "apexio_clickhouse", p.get("title")
+    sql = p["targets"][0].get("rawSql", "")
+    assert "apexio.logs" in sql, p.get("title")
+print("ok")
+PY
+  pass "dashboard JSON valid (5 panels, ClickHouse datasource)"
+}
+
+wait_http_ok() {
+  local url="$1"
+  local attempts="${2:-60}"
+  local i
+  for ((i = 1; i <= attempts; i++)); do
+    if curl -sf "${url}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  fail "timed out waiting for ${url}"
+}
+
+post_log() {
+  local message="$1"
+  local level="$2"
+  local status="$3"
+  local duration="$4"
+  local id="${RANDOM}${RANDOM}"
+  local code
+  code="$(curl -s -o /tmp/apexio-phase5-post.json -w '%{http_code}' \
+    -X POST "${GATEWAY}/api/v1/log" \
+    -H 'Content-Type: application/json' \
+    -d "{
+      \"id\": ${id},
+      \"timestamp\": $(date +%s000),
+      \"logLevel\": \"${level}\",
+      \"message\": \"${message}\",
+      \"metadata\": {
+        \"requestMethod\": \"GET\",
+        \"requestPath\": \"/phase5\",
+        \"responseStatus\": ${status},
+        \"responseDuration\": ${duration}
+      },
+      \"source\": {
+        \"service\": \"phase5-dashboard\",
+        \"host\": \"localhost\",
+        \"environment\": \"dev\"
+      }
+    }")"
+  [[ "${code}" == "201" ]] || fail "seed ingest failed (${code}): $(cat /tmp/apexio-phase5-post.json)"
+}
+
+seed_clickhouse_data() {
+  info "seeding sample logs for dashboard panels"
+  post_log "${SEED_PREFIX}-info-200" "INFO" 200 45.5
+  post_log "${SEED_PREFIX}-info-201" "INFO" 201 120.0
+  post_log "${SEED_PREFIX}-warn-404" "WARN" 404 80.2
+  post_log "${SEED_PREFIX}-error-500" "ERROR" 500 250.7
+  post_log "${SEED_PREFIX}-fatal-502" "FATAL" 502 900.1
+  pass "seeded 5 logs via gateway"
+}
+
+wait_seed_in_clickhouse() {
+  local i count
+  for ((i = 1; i <= 45; i++)); do
+    count="$(docker exec apexio-clickhouse clickhouse-client --query \
+      "SELECT count() FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%'" 2>/dev/null || echo 0)"
+    if [[ "${count}" -ge 5 ]]; then
+      return 0
+    fi
+    sleep 2
+  done
+  fail "seed logs not visible in ClickHouse"
+}
+
+test_clickhouse_panel_queries() {
+  local errors volume statuses
+  errors="$(docker exec apexio-clickhouse clickhouse-client --query \
+    "SELECT count() FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%' AND log_level IN ('ERROR','FATAL')")"
+  [[ "${errors}" -ge 2 ]] || fail "error panel query expected >=2, got ${errors}"
+
+  volume="$(docker exec apexio-clickhouse clickhouse-client --query \
+    "SELECT count() FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%'")"
+  [[ "${volume}" -ge 5 ]] || fail "volume query expected >=5, got ${volume}"
+
+  statuses="$(docker exec apexio-clickhouse clickhouse-client --query \
+    "SELECT count(DISTINCT response_status) FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%' AND response_status > 0")"
+  [[ "${statuses}" -ge 3 ]] || fail "status distribution expected >=3 codes, got ${statuses}"
+
+  pass "ClickHouse panel queries return expected seed data"
+}
+
+test_grafana_provisioning() {
+  wait_http_ok "${GRAFANA}/api/health" 90
+  # Plugin install + file provisioning can take a short while after container start.
+  local i dash=""
+  for ((i = 1; i <= 45; i++)); do
+    dash="$(curl -sf -u "${GRAFANA_AUTH}" "${GRAFANA}/api/dashboards/uid/apexio-logs" 2>/dev/null || true)"
+    if [[ -n "${dash}" ]] && echo "${dash}" | grep -q 'Apexio Logs'; then
+      break
+    fi
+    sleep 2
+  done
+  local ds
+  ds="$(curl -sf -u "${GRAFANA_AUTH}" "${GRAFANA}/api/datasources/uid/apexio_clickhouse")" \
+    || fail "ClickHouse datasource not provisioned"
+  echo "${ds}" | grep -q 'grafana-clickhouse-datasource' \
+    || fail "unexpected datasource: ${ds}"
+  pass "ClickHouse datasource provisioned"
+
+  [[ -n "${dash}" ]] || dash="$(curl -sf -u "${GRAFANA_AUTH}" "${GRAFANA}/api/dashboards/uid/apexio-logs" 2>/dev/null || true)"
+  [[ -n "${dash}" ]] || fail "dashboard apexio-logs not provisioned"
+  echo "${dash}" | grep -q 'Apexio Logs' || fail "dashboard title missing"
+  echo "${dash}" | grep -q 'Log Volume Over Time' || fail "panel missing in provisioned dashboard"
+  echo "${dash}" | grep -q 'apexio_clickhouse' || fail "dashboard not wired to ClickHouse datasource"
+  pass "Grafana dashboard provisioned (uid=apexio-logs)"
+}
+
+test_e2e() {
+  require_cmd docker
+  require_cmd curl
+  require_cmd python3
+
+  info "starting stack"
+  "${COMPOSE[@]}" up -d --build
+  # Ensure Grafana picks up dashboard JSON from the mounted provisioning folder.
+  "${COMPOSE[@]}" up -d --force-recreate grafana
+  wait_http_ok "${GATEWAY}/healthz" 90
+  wait_http_ok "http://127.0.0.1:8081/healthz" 90
+  pass "stack healthy"
+
+  seed_clickhouse_data
+  wait_seed_in_clickhouse
+  test_clickhouse_panel_queries
+  test_grafana_provisioning
+}
+
+main() {
+  test_dashboard_file
+  test_e2e
+  echo
+  pass "Phase 5 Grafana dashboard tests all passed"
+  info "Open ${GRAFANA}/d/apexio-logs/apexio-logs (admin/admin)"
+}
+
+main "$@"
