@@ -43,7 +43,15 @@ make test-k8s          # kubectl kustomize validation
 
 After `make up`, open [http://127.0.0.1:3000/d/apexio-logs/apexio-logs](http://127.0.0.1:3000/d/apexio-logs/apexio-logs) (`admin` / `admin`).
 
-Panels: log volume, error rate, recent errors, response-time distribution, status-code distribution — all backed by `apexio.logs` in ClickHouse. Dashboards are provisioned from [`deploy/grafana/provisioning/dashboards/json/apexio-logs.json`](grafana/provisioning/dashboards/json/apexio-logs.json); no manual token or Job step.
+**Row layout**
+
+| Row | Panels |
+|-----|--------|
+| Overview | Total logs, errors, error rate %, p95 latency, active services |
+| Trends | Volume by level, error count, top services, HTTP status, latency p50/p95/p99, slowest paths |
+| Logs | Recent errors + full **Log Viewer** (filterable table) |
+
+Shared template variables: `service`, `environment`, `log_level`, `host`, `search`. All panels query `apexio.logs` in ClickHouse. Dashboard JSON is provisioned from [`deploy/grafana/provisioning/dashboards/json/apexio-logs.json`](grafana/provisioning/dashboards/json/apexio-logs.json); no manual token or Job step.
 
 ---
 
