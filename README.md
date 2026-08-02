@@ -82,11 +82,15 @@ Client → gateway (REST + OTLP) → Redpanda → writer → ClickHouse → Graf
 ## ✨ Features
 
 ### 📊 Grafana Dashboards (as code)
-- **Log volume** — traffic over time
-- **Error rate** — spot spikes quickly
-- **Recent errors** — tail failing requests
-- **Response time & status code** — HTTP performance panels
-- Provisioned from `deploy/grafana/provisioning/` — no manual setup
+- **Filters** — service, environment, log level, host, and message search
+- **KPI strip** — total logs, errors, error rate %, p95 latency, active services
+- **Trends** — volume by level, error count, top services, HTTP status, latency percentiles, slowest paths
+- **Log Viewer** — filterable table of recent events (plus Recent Errors triage)
+- Provisioned from `deploy/grafana/provisioning/` — open [http://127.0.0.1:3000/d/apexio-logs/apexio-logs](http://127.0.0.1:3000/d/apexio-logs/apexio-logs) (`admin` / `admin`)
+
+![Apexio Logs dashboard overview](docs/images/grafana-overview.png)
+
+![Apexio Log Viewer](docs/images/grafana-log-viewer.png)
 
 ### 🚀 High-Performance Ingestion
 - **REST** — `POST /api/v1/log` JSON body
@@ -226,16 +230,28 @@ docker exec apexio-clickhouse clickhouse-client --query \
 
 ### Log schema reference
 
-| Field | Type | Description | Required |
-|-------|------|-------------|----------|
-| `id` | uint64 | Unique log identifier | ✅ |
-| `timestamp` | uint64 | Unix epoch milliseconds | ✅ |
-| `logLevel` | string | DEBUG, INFO, WARN, ERROR, FATAL | ✅ |
-| `message` | string | Log message | ✅ |
-| `metadata` | object | HTTP / request metadata | ❌ |
-| `source` | object | host, service, environment | ❌ |
+Canonical columns in ClickHouse `apexio.logs` (and `schema.LogEvent`):
 
-Canonical in-process type: `schema.LogEvent` in [`pkg/schema`](pkg/schema/event.go).
+| Column | Type | Description |
+|--------|------|-------------|
+| `timestamp` | DateTime64(3) | Event time (UTC) |
+| `id` | UInt64 | Event id |
+| `log_level` | String | DEBUG / INFO / WARN / ERROR / FATAL |
+| `message` | String | Log body |
+| `service` | String | Emitting service |
+| `host` | String | Host |
+| `environment` | String | e.g. dev, staging, production |
+| `request_id` | String | Correlation id |
+| `client_ip` | String | Client IP when present |
+| `user_agent` | String | User agent when present |
+| `request_method` | String | HTTP method when present |
+| `request_path` | String | HTTP path when present |
+| `response_status` | UInt16 | HTTP status (`0` if N/A) |
+| `response_duration_ms` | Float64 | Latency in ms (`0` if N/A) |
+| `attrs` | Map(String, String) | Extra / OTLP attributes |
+| `ingested_at` | DateTime64(3) | Writer insert time |
+
+REST ingest still accepts camelCase JSON (`logLevel`, `metadata.*`, `source.*`); `schema.FromREST` maps it into this flat model. See [`pkg/schema/event.go`](pkg/schema/event.go) and [`deploy/clickhouse/init/01_schema.sql`](deploy/clickhouse/init/01_schema.sql).
 
 ## ⚙️ Configuration
 

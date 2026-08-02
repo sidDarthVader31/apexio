@@ -22,25 +22,41 @@ with open(path) as f:
     d = json.load(f)
 assert d.get("uid") == "apexio-logs", d.get("uid")
 assert d.get("title") == "Apexio Logs"
-panels = d.get("panels", [])
-assert len(panels) == 5, len(panels)
+panels = [p for p in d.get("panels", []) if p.get("type") != "row"]
+assert len(panels) >= 12, f"expected >=12 data panels, got {len(panels)}"
 titles = {p["title"] for p in panels}
 expected = {
-    "Log Volume Over Time",
-    "Error Rate",
+    "Total Logs",
+    "Errors",
+    "Error Rate %",
+    "p95 Latency",
+    "Active Services",
+    "Log Volume by Level",
+    "Error Count Over Time",
+    "Top Services by Volume",
+    "HTTP Status (when present)",
+    "Latency Percentiles (p50 / p95 / p99)",
+    "Slowest Paths",
     "Recent Errors",
-    "Response Time Distribution",
-    "Status Code Distribution",
+    "Log Viewer",
 }
-assert expected <= titles, titles
+missing = expected - titles
+assert not missing, f"missing panels: {missing}"
 for p in panels:
     uid = p.get("datasource", {}).get("uid")
     assert uid == "apexio_clickhouse", p.get("title")
     sql = p["targets"][0].get("rawSql", "")
     assert "apexio.logs" in sql, p.get("title")
+vars_ = {v["name"] for v in d.get("templating", {}).get("list", [])}
+for name in ("service", "environment", "log_level", "host", "search"):
+    assert name in vars_, f"missing variable {name}"
+assert d.get("time", {}).get("from") == "now-1h", d.get("time")
+viewer = next(p for p in panels if p["title"] == "Log Viewer")
+assert "formatDateTime" in viewer["targets"][0]["rawSql"], "Log Viewer should stringify timestamps"
+assert "match(service" in viewer["targets"][0]["rawSql"], "Log Viewer should use variable match filters"
 print("ok")
 PY
-  pass "dashboard JSON valid (5 panels, ClickHouse datasource)"
+  pass "dashboard JSON valid (panels, variables, ClickHouse datasource)"
 }
 
 post_log() {
@@ -48,6 +64,8 @@ post_log() {
   local level="$2"
   local status="$3"
   local duration="$4"
+  local service="${5:-grafana-dashboard}"
+  local path="${6:-/grafana-test}"
   local id="${RANDOM}${RANDOM}"
   local code
   code="$(curl -s -o /tmp/apexio-grafana-post.json -w '%{http_code}' \
@@ -59,13 +77,14 @@ post_log() {
       \"logLevel\": \"${level}\",
       \"message\": \"${message}\",
       \"metadata\": {
+        \"requestId\": \"req-${id}\",
         \"requestMethod\": \"GET\",
-        \"requestPath\": \"/grafana-test\",
+        \"requestPath\": \"${path}\",
         \"responseStatus\": ${status},
         \"responseDuration\": ${duration}
       },
       \"source\": {
-        \"service\": \"grafana-dashboard\",
+        \"service\": \"${service}\",
         \"host\": \"localhost\",
         \"environment\": \"dev\"
       }
@@ -75,11 +94,11 @@ post_log() {
 
 seed_clickhouse_data() {
   info "seeding sample logs for dashboard panels"
-  post_log "${SEED_PREFIX}-info-200" "INFO" 200 45.5
-  post_log "${SEED_PREFIX}-info-201" "INFO" 201 120.0
-  post_log "${SEED_PREFIX}-warn-404" "WARN" 404 80.2
-  post_log "${SEED_PREFIX}-error-500" "ERROR" 500 250.7
-  post_log "${SEED_PREFIX}-fatal-502" "FATAL" 502 900.1
+  post_log "${SEED_PREFIX}-info-200" "INFO" 200 45.5 "api-gateway" "/health"
+  post_log "${SEED_PREFIX}-info-201" "INFO" 201 120.0 "user-service" "/api/users"
+  post_log "${SEED_PREFIX}-warn-404" "WARN" 404 80.2 "api-gateway" "/api/missing"
+  post_log "${SEED_PREFIX}-error-500" "ERROR" 500 250.7 "user-service" "/api/users"
+  post_log "${SEED_PREFIX}-fatal-502" "FATAL" 502 900.1 "payments" "/api/charge"
   pass "seeded 5 logs via gateway"
 }
 
@@ -97,7 +116,7 @@ wait_seed_in_clickhouse() {
 }
 
 test_clickhouse_panel_queries() {
-  local errors volume statuses
+  local errors volume statuses services
   errors="$(docker exec apexio-clickhouse clickhouse-client --query \
     "SELECT count() FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%' AND log_level IN ('ERROR','FATAL')")"
   [[ "${errors}" -ge 2 ]] || fail "error panel query expected >=2, got ${errors}"
@@ -109,6 +128,10 @@ test_clickhouse_panel_queries() {
   statuses="$(docker exec apexio-clickhouse clickhouse-client --query \
     "SELECT count(DISTINCT response_status) FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%' AND response_status > 0")"
   [[ "${statuses}" -ge 3 ]] || fail "status distribution expected >=3 codes, got ${statuses}"
+
+  services="$(docker exec apexio-clickhouse clickhouse-client --query \
+    "SELECT uniqExact(service) FROM apexio.logs WHERE message LIKE '${SEED_PREFIX}%'")"
+  [[ "${services}" -ge 2 ]] || fail "expected >=2 services, got ${services}"
 
   pass "ClickHouse panel queries return expected seed data"
 }
@@ -134,8 +157,11 @@ test_grafana_provisioning() {
   [[ -n "${dash}" ]] || dash="$(curl -sf -u "${GRAFANA_AUTH}" "${GRAFANA}/api/dashboards/uid/apexio-logs" 2>/dev/null || true)"
   [[ -n "${dash}" ]] || fail "dashboard apexio-logs not provisioned"
   echo "${dash}" | grep -q 'Apexio Logs' || fail "dashboard title missing"
-  echo "${dash}" | grep -q 'Log Volume Over Time' || fail "panel missing in provisioned dashboard"
+  echo "${dash}" | grep -q 'Log Viewer' || fail "Log Viewer panel missing in provisioned dashboard"
+  echo "${dash}" | grep -q 'Error Rate %' || fail "Error Rate % panel missing"
   echo "${dash}" | grep -q 'apexio_clickhouse' || fail "dashboard not wired to ClickHouse datasource"
+  echo "${dash}" | grep -q '"name":"service"' || fail "service variable missing"
+  echo "${dash}" | grep -q '"name":"search"' || fail "search variable missing"
   pass "Grafana dashboard provisioned (uid=apexio-logs)"
 }
 

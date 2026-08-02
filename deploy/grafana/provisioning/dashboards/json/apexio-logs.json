@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -14,106 +17,924 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "showPoints": "auto"
-          },
-          "unit": "short"
-        },
-        "overrides": []
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "id": 1,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
-          "editorMode": "code",
-          "format": 1,
-          "queryType": "sql",
-          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\nGROUP BY time\nORDER BY time",
-          "refId": "A"
-        }
-      ],
-      "title": "Log Volume Over Time",
-      "type": "timeseries"
+      "id": 100,
+      "panels": [],
+      "title": "Overview",
+      "type": "row"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "showPoints": "auto"
+          "color": {
+            "mode": "thresholds"
           },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "id": 2,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
-          "editorMode": "code",
-          "format": 1,
-          "queryType": "sql",
-          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND log_level IN ('ERROR', 'FATAL')\nGROUP BY time\nORDER BY time",
-          "refId": "A"
-        }
-      ],
-      "title": "Error Rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" } },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 80 }
+              {
+                "color": "blue",
+                "value": null
+              }
             ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 0,
+        "y": 1
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Logs",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 5,
+        "y": 1
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  countIf(log_level IN ('ERROR', 'FATAL')) AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)",
+          "refId": "A"
+        }
+      ],
+      "title": "Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 10,
+        "y": 1
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  if(count() = 0, 0, countIf(log_level IN ('ERROR', 'FATAL')) * 100.0 / count()) AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Rate %",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 14,
+        "y": 1
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  quantile(0.95)(response_duration_ms) AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\n  AND response_duration_ms > 0",
+          "refId": "A"
+        }
+      ],
+      "title": "p95 Latency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  uniqExact(service) AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Services",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 101,
+      "panels": [],
+      "title": "Trends",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "showPoints": "never"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "FATAL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "WARN"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "INFO"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DEBUG"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  log_level AS metric,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\nGROUP BY time, log_level\nORDER BY time ASC, log_level",
+          "refId": "A"
+        }
+      ],
+      "title": "Log Volume by Level",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "auto"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\n  AND log_level IN ('ERROR', 'FATAL')\nGROUP BY time\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Count Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
           }
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
-      "id": 3,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "id": 22,
       "options": {
         "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  service,\n  count() AS logs\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\nGROUP BY service\nORDER BY logs DESC\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Services by Volume",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  toString(response_status) AS status,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\n  AND response_status > 0\nGROUP BY response_status\nORDER BY value DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP Status (when present)",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  quantile(0.50)(response_duration_ms) AS p50,\n  quantile(0.95)(response_duration_ms) AS p95,\n  quantile(0.99)(response_duration_ms) AS p99\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\n  AND response_duration_ms > 0\nGROUP BY time\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "title": "Latency Percentiles (p50 / p95 / p99)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 25,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
           "editorMode": "code",
           "format": 0,
           "queryType": "sql",
-          "rawSql": "SELECT\n  timestamp,\n  service,\n  log_level,\n  message,\n  request_path,\n  response_status\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND log_level IN ('ERROR', 'FATAL')\nORDER BY timestamp DESC\nLIMIT 100",
+          "rawSql": "SELECT\n  request_path,\n  count() AS requests,\n  avg(response_duration_ms) AS avg_ms,\n  quantile(0.95)(response_duration_ms) AS p95_ms\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\n  AND response_duration_ms > 0\n  AND request_path != ''\nGROUP BY request_path\nORDER BY avg_ms DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "Slowest Paths",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 102,
+      "panels": [],
+      "title": "Logs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "log_level"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "DEBUG": {
+                        "color": "text",
+                        "index": 0,
+                        "text": "DEBUG"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "INFO": {
+                        "color": "blue",
+                        "index": 1,
+                        "text": "INFO"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "WARN": {
+                        "color": "orange",
+                        "index": 2,
+                        "text": "WARN"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "ERROR": {
+                        "color": "red",
+                        "index": 3,
+                        "text": "ERROR"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "FATAL": {
+                        "color": "dark-red",
+                        "index": 4,
+                        "text": "FATAL"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 30,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "time",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  formatDateTime(timestamp, '%Y-%m-%d %H:%i:%S') AS time,\n  service,\n  log_level,\n  message,\n  request_path,\n  response_status\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\n  AND log_level IN ('ERROR', 'FATAL')\nORDER BY timestamp DESC\nLIMIT 50",
           "refId": "A"
         }
       ],
@@ -121,72 +942,320 @@
       "type": "table"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "apexio_clickhouse"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "id": 4,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "right", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
-          "editorMode": "code",
-          "format": 0,
-          "queryType": "sql",
-          "rawSql": "SELECT\n  floor(response_duration_ms / 50) * 50 AS bucket,\n  count() AS count\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND response_duration_ms > 0\nGROUP BY bucket\nORDER BY bucket",
-          "refId": "A"
-        }
-      ],
-      "title": "Response Time Distribution",
-      "type": "barchart"
-    },
-    {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
           "mappings": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "log_level"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "DEBUG": {
+                        "color": "text",
+                        "index": 0,
+                        "text": "DEBUG"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "INFO": {
+                        "color": "blue",
+                        "index": 1,
+                        "text": "INFO"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "WARN": {
+                        "color": "orange",
+                        "index": 2,
+                        "text": "WARN"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "ERROR": {
+                        "color": "red",
+                        "index": 3,
+                        "text": "ERROR"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "FATAL": {
+                        "color": "dark-red",
+                        "index": 4,
+                        "text": "FATAL"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "message"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 360
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "response_duration_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "id": 5,
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 31,
       "options": {
-        "legend": { "displayMode": "table", "placement": "right", "showLegend": true },
-        "pieType": "pie",
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": true },
-        "tooltip": { "mode": "single", "sort": "none" }
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": {
+          "countRows": true,
+          "fields": "",
+          "reducer": [
+            "count"
+          ],
+          "show": true
+        },
+        "sortBy": [
+          {
+            "displayName": "time",
+            "desc": true
+          }
+        ]
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "apexio_clickhouse"
+          },
           "editorMode": "code",
           "format": 0,
           "queryType": "sql",
-          "rawSql": "SELECT\n  toString(response_status) AS status,\n  count() AS count\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND response_status > 0\nGROUP BY response_status\nORDER BY count DESC",
+          "rawSql": "SELECT\n  formatDateTime(timestamp, '%Y-%m-%d %H:%i:%S') AS time,\n  log_level,\n  service,\n  message,\n  host,\n  environment,\n  request_method,\n  request_path,\n  response_status,\n  response_duration_ms,\n  request_id,\n  formatDateTime(ingested_at, '%Y-%m-%d %H:%i:%S') AS ingested_at\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND match(service, '$service')\n  AND match(environment, '$environment')\n  AND match(log_level, '$log_level')\n  AND match(host, '$host')\n  AND ('$search' = '' OR positionCaseInsensitive(message, '$search') > 0)\nORDER BY timestamp DESC\nLIMIT 500",
           "refId": "A"
         }
       ],
-      "title": "Status Code Distribution",
-      "type": "piechart"
+      "title": "Log Viewer",
+      "type": "table"
     }
   ],
-  "refresh": "5s",
+  "refresh": "10s",
   "schemaVersion": 40,
-  "tags": ["apexio", "logs"],
-  "templating": { "list": [] },
-  "time": { "from": "now-12h", "to": "now" },
+  "tags": [
+    "apexio",
+    "logs"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "apexio_clickhouse"
+        },
+        "definition": "SELECT DISTINCT service FROM apexio.logs WHERE $__timeFilter_ms(timestamp) AND service != '' ORDER BY service",
+        "includeAll": true,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [],
+        "query": "SELECT DISTINCT service FROM apexio.logs WHERE $__timeFilter_ms(timestamp) AND service != '' ORDER BY service",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "apexio_clickhouse"
+        },
+        "definition": "SELECT DISTINCT environment FROM apexio.logs WHERE $__timeFilter_ms(timestamp) AND environment != '' ORDER BY environment",
+        "includeAll": true,
+        "label": "Environment",
+        "multi": false,
+        "name": "environment",
+        "options": [],
+        "query": "SELECT DISTINCT environment FROM apexio.logs WHERE $__timeFilter_ms(timestamp) AND environment != '' ORDER BY environment",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "Level",
+        "multi": false,
+        "name": "log_level",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "DEBUG",
+            "value": "DEBUG"
+          },
+          {
+            "selected": false,
+            "text": "INFO",
+            "value": "INFO"
+          },
+          {
+            "selected": false,
+            "text": "WARN",
+            "value": "WARN"
+          },
+          {
+            "selected": false,
+            "text": "ERROR",
+            "value": "ERROR"
+          },
+          {
+            "selected": false,
+            "text": "FATAL",
+            "value": "FATAL"
+          }
+        ],
+        "query": "DEBUG,INFO,WARN,ERROR,FATAL",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "apexio_clickhouse"
+        },
+        "definition": "SELECT DISTINCT host FROM apexio.logs WHERE $__timeFilter_ms(timestamp) AND host != '' ORDER BY host",
+        "includeAll": true,
+        "label": "Host",
+        "multi": false,
+        "name": "host",
+        "options": [],
+        "query": "SELECT DISTINCT host FROM apexio.logs WHERE $__timeFilter_ms(timestamp) AND host != '' ORDER BY host",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Search",
+        "name": "search",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "Apexio Logs",
   "uid": "apexio-logs",
-  "version": 1
+  "version": 7
 }
