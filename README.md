@@ -7,7 +7,7 @@
 [![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://golang.org/)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-326ce5.svg?&style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
-**A comprehensive, self-hosted logging solution for distributed systems**
+**A clone-and-adapt push-based log backend for distributed systems**
 
 ⭐ Star us on GitHub — it helps us reach more developers!
 
@@ -17,106 +17,121 @@
 
 - [🔥 Quick Start](#-quick-start)
 - [📖 Overview](#-overview)
-- [✨ Features](#-features)  
+- [✨ Features](#-features)
 - [🏗️ Architecture](#️-architecture)
 - [💻 Tech Stack](#-tech-stack)
 - [🚀 Installation](#-installation)
 - [📊 Usage](#-usage)
 - [⚙️ Configuration](#️-configuration)
+- [🧪 Testing](#-testing)
 - [🛠️ Contributing](#️-contributing)
 - [🗺️ Roadmap](#️-roadmap)
 
 ## 🔥 Quick Start
 
-Get Apexio running in under 5 minutes:
+Get Apexio running locally in a few minutes:
 
 ```bash
-# Clone the repository
 git clone https://github.com/sidDarthVader31/apexio.git
 cd apexio
 
-# Deploy with Docker Compose (local development)
-docker-compose up -d
-
-# Or deploy to Kubernetes (production)
-kubectl apply -f deployments/k8-config/
+make up          # Docker Compose: gateway, writer, Redpanda, ClickHouse, Grafana
+make test        # fast: unit + contracts + k8s manifest validation
+make test-e2e    # full compose pipeline (tears down stack on exit)
 ```
 
-Access your dashboard at `http://localhost:3000/grafana`
+| What | URL |
+|------|-----|
+| **Grafana dashboard** | [http://127.0.0.1:3000/d/apexio-logs/apexio-logs](http://127.0.0.1:3000/d/apexio-logs/apexio-logs) (`admin` / `admin`) |
+| **Gateway REST** | `POST http://127.0.0.1:18080/api/v1/log` |
+| **Gateway OTLP HTTP** | `POST http://127.0.0.1:18080/v1/logs` |
+| **Gateway OTLP gRPC** | `:4317` |
+
+Send a test log:
+
+```bash
+curl -sS -X POST http://127.0.0.1:18080/api/v1/log \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 1,
+    "timestamp": 1732974309000,
+    "logLevel": "INFO",
+    "message": "hello apexio",
+    "source": {"service": "demo", "host": "localhost", "environment": "dev"}
+  }'
+```
+
+For Kubernetes (kind / minikube), see [deploy/k8s/README.md](deploy/k8s/README.md).
 
 ## 📖 Overview
 
-**Apexio** is a powerful, self-hosted log management and analysis platform designed for teams who need enterprise-grade logging capabilities without the enterprise price tag. Built with modern microservices architecture, Apexio provides real-time insights, proactive monitoring, and comprehensive log management for distributed environments.
+**Apexio** is an open-source, self-hosted log pipeline you **fork and adapt** per organization. It is not a hosted SaaS — you own the data, the broker, and the auth layer.
+
+```
+Client → gateway (REST + OTLP) → Redpanda → writer → ClickHouse → Grafana
+```
 
 ### Why Choose Apexio?
 
-- **💰 Cost-Effective**: No expensive licensing fees or per-GB pricing
-- **🔒 Data Privacy**: Keep your sensitive logs on your infrastructure
-- **📈 Scalable**: Handle millions of log entries with ease
-- **🎯 Real-time**: Get insights as they happen, not hours later
-- **🔧 Customizable**: Adapt to your specific logging needs
+- **💰 Cost-Effective** — No per-GB SaaS pricing; run on your infra
+- **🔒 Data Privacy** — Logs stay in your VPC or laptop
+- **📈 Scalable** — Kafka-compatible broker + columnar storage
+- **🎯 Real-time** — Push ingest, batched writes, live dashboards
+- **🔧 Adaptable** — Swap broker, auth, or storage via Go interfaces
 
 ## ✨ Features
 
-### 📊 Comprehensive Monitoring Dashboard
-- **Log Volume Tracking** - Monitor traffic patterns and system load
-- **Error Rate Analysis** - Identify bugs and system issues quickly
-- **Response Time Distribution** - Track application performance
-- **Status Code Analysis** - Monitor HTTP response patterns
-- **Real-time Error Logs** - Debug issues as they occur
+### 📊 Grafana Dashboards (as code)
+- **Log volume** — traffic over time
+- **Error rate** — spot spikes quickly
+- **Recent errors** — tail failing requests
+- **Response time & status code** — HTTP performance panels
+- Provisioned from `deploy/grafana/provisioning/` — no manual setup
 
 ### 🚀 High-Performance Ingestion
-- **Dual Protocol Support** - REST API and gRPC endpoints
-- **Batch Processing** - Efficient handling of high-volume logs
-- **Message Queuing** - Kafka-based reliable log delivery
-- **Auto-scaling** - Handle traffic spikes automatically
+- **REST** — `POST /api/v1/log` JSON body
+- **OTLP** — HTTP `/v1/logs` and gRPC `:4317` (OpenTelemetry logs)
+- **Batched writer** — configurable batch size, flush interval, retries
+- **Prometheus metrics** — gateway and writer `/metrics` endpoints
 
-### 📈 Advanced Analytics
-- **Grafana Integration** - Beautiful, customizable dashboards
-- **Elasticsearch Storage** - Fast, full-text search capabilities
-- **Real-time Queries** - Filter and search logs instantly
-- **Historical Analysis** - Trend analysis and pattern recognition
+### 🔌 Extension Points
+- **Auth** — optional API-key middleware (`pkg/auth`); plug in JWT, mTLS, or your IdP
+- **Broker** — `broker.Broker` interface; default Redpanda, swap for Kafka/NATS/etc.
+- **Store** — `store.Store` interface; default ClickHouse
 
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-    Client-->|REST|Source_Web
-    Client-->|gRPC|Source_gRPC
+    Client[Client Apps]
+    Gateway[gateway]
+    Redpanda[(Redpanda)]
+    Writer[writer]
+    ClickHouse[(ClickHouse)]
+    Grafana[Grafana]
 
-    subgraph Log_Ingestion_Service[Log Ingestion Service]
-        Source_Web[Source Web]
-        Source_gRPC[Source gRPC]
-    end
+    Client -->|REST / OTLP| Gateway
+    Gateway --> Redpanda
+    Redpanda --> Writer
+    Writer --> ClickHouse
+    Grafana -.->|SQL| ClickHouse
 
-    Source_Web-->Kafka
-    Source_gRPC-->Kafka
-    Kafka-->Log_Processing_Service
-    Log_Processing_Service-->Elasticsearch
-    Grafana-.-|Query|Elasticsearch
-    Custom_Dashboard-.-|Query|Elasticsearch
-
-    Client[Client Applications]
-    Kafka[(Kafka Message Queue)]
-    Log_Processing_Service[Log Processing Service]
-    Elasticsearch[(Elasticsearch)]
-    Grafana[Grafana Dashboard]
-    Custom_Dashboard[Custom Dashboard]
-
-    style Kafka fill:#f96,stroke:#333
-    style Elasticsearch fill:#5ca0f2,stroke:#333
+    style Redpanda fill:#f96,stroke:#333
+    style ClickHouse fill:#5ca0f2,stroke:#333
     style Grafana fill:#f9f,stroke:#333
 ```
 
 ### Service Components
 
-| Service | Purpose | Technology |
-|---------|---------|------------|
-| **Log Ingestion** | Receives logs via REST/gRPC | Go, Gin, gRPC |
-| **Log Processing** | Processes and stores logs | Go, Kafka Consumer |
-| **Message Queue** | Reliable log delivery | Apache Kafka |
-| **Storage** | Log storage and indexing | Elasticsearch |
-| **Visualization** | Dashboards and analytics | Grafana |
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| **gateway** | REST + OTLP ingest, optional auth | `cmd/gateway` |
+| **writer** | Consume broker, batch insert | `cmd/writer` |
+| **Redpanda** | Durable log queue (Kafka API) | `deploy/compose`, `deploy/k8s` |
+| **ClickHouse** | Columnar log storage | `deploy/clickhouse` |
+| **Grafana** | Dashboards & exploration | `deploy/grafana` |
+
+Shared contracts live in [`pkg/`](pkg/README.md) (`schema`, `broker`, `store`, `auth`).
 
 ## 💻 Tech Stack
 
@@ -124,12 +139,11 @@ flowchart LR
 
 | Component | Technology | Version |
 |-----------|------------|---------|
-| **Backend** | Go | 1.21+ |
-| **Message Queue** | Apache Kafka | 2.8+ |
-| **Database** | Elasticsearch | 8.x |
-| **Visualization** | Grafana | 10.x |
-| **Orchestration** | Kubernetes | 1.25+ |
-| **Containerization** | Docker | 20.x |
+| **Services** | Go | 1.23+ |
+| **Message queue** | Redpanda (Kafka API) | latest |
+| **Database** | ClickHouse | 24.x |
+| **Visualization** | Grafana + ClickHouse plugin | 11.x |
+| **Orchestration** | Docker Compose / Kubernetes | — |
 
 </div>
 
@@ -137,123 +151,56 @@ flowchart LR
 
 ### Prerequisites
 
-- **Kubernetes Cluster** (1.25+) or **Docker** (20.x+)
-- **kubectl** configured for your cluster
-- **Minimum Resources**: 4 CPU cores, 8GB RAM, 50GB storage
+- **Docker** 20.x+ and **Docker Compose** v2 (local dev)
+- **Go** 1.23+ (build from source, run tests)
+- **kubectl** + **kind** or **minikube** (optional, for K8s)
 
-### Option 1: Kubernetes Deployment (Recommended for Production)
-
-1. **Clone and prepare the repository**
-   ```bash
-   git clone https://github.com/sidDarthVader31/apexio.git
-   cd apexio
-   ```
-
-2. **Build and push Docker images**
-   ```bash
-   # Build images
-   docker build -t your-registry/apexio-source-web:1.0 ./log_ingestion_service/source_web
-   docker build -t your-registry/apexio-source-grpc:1.0 ./log_ingestion_service/source_grpc  
-   docker build -t your-registry/apexio-log-processor:1.0 ./log_processing_service
-
-   # Push to your registry
-   docker push your-registry/apexio-source-web:1.0
-   docker push your-registry/apexio-source-grpc:1.0
-   docker push your-registry/apexio-log-processor:1.0
-   ```
-
-3. **Update image references**
-   ```bash
-   # Update deployment files with your registry URLs
-   find deployments/k8-config/deployments -name "*.yaml" -exec sed -i 's/apexio-/your-registry\/apexio-/g' {} \;
-   ```
-
-4. **Deploy infrastructure components**
-   ```bash
-   cd deployments/k8-config
-
-   # Deploy ConfigMaps and Secrets
-   kubectl apply -f configMap/
-   kubectl apply -f secrets/
-
-   # Deploy core services
-   kubectl apply -f deployments/elasticsearch.yaml
-   kubectl apply -f deployments/kafka.yaml
-   ```
-
-5. **Deploy Apexio services**
-   ```bash
-   kubectl apply -f deployments/log-processing-service.yaml
-   kubectl apply -f deployments/source-web.yaml
-   kubectl apply -f deployments/source-grpc.yaml
-   kubectl apply -f deployments/grafana.yaml
-   ```
-
-6. **Setup Grafana dashboard**
-   ```bash
-   # Create Grafana ingress
-   kubectl apply -f ingress/grafana.yaml
-
-   # Get Grafana admin password
-   kubectl get secret grafana-admin -o jsonpath="{.data.password}" | base64 --decode
-
-   # Generate service account token in Grafana UI and update job config
-   # Edit deployments/k8-config/job/grafana.yaml with the token
-
-   # Run dashboard setup job
-   kubectl apply -f job/grafana.yaml
-   ```
-
-### Option 2: Docker Compose (Development)
+### Option 1: Docker Compose (recommended for dev)
 
 ```bash
-# Coming soon - Docker Compose setup
-# Check our issues for Docker Compose implementation progress
+git clone https://github.com/sidDarthVader31/apexio.git
+cd apexio
+
+cp .env.example .env   # optional: API key, batch tuning
+make up
+make test-e2e          # optional: full pipeline verification
 ```
 
-### Verification
+Stop the stack: `make down`. Reset data: `make clean-volumes`.
 
-Check if all services are running:
+Full deploy docs: [deploy/README.md](deploy/README.md).
+
+### Option 2: Kubernetes (kind / minikube)
 
 ```bash
-kubectl get pods -n apexio
-kubectl get services -n apexio
+kind create cluster --name apexio
+docker build -t apexio-gateway:local -f cmd/gateway/Dockerfile .
+docker build -t apexio-writer:local -f cmd/writer/Dockerfile .
+kind load docker-image apexio-gateway:local apexio-writer:local --name apexio
+kubectl apply -k deploy
 ```
 
-Access Grafana dashboard:
-- **URL**: `http://your-cluster-ip:3000` or through ingress
-- **Login**: admin / [password from secrets]
+See [deploy/k8s/README.md](deploy/k8s/README.md) for smoke tests, NodePorts, and teardown.
 
 ## 📊 Usage
 
-### Sending Logs to Apexio
+### REST ingest
 
-#### REST API Endpoint
-
-**URL**: `POST http://your-cluster-url:3000/api/v1/log`
-
-**Sample Request**:
 ```bash
-curl -X POST http://your-cluster-url:3000/api/v1/log \
+curl -X POST http://127.0.0.1:18080/api/v1/log \
   -H "Content-Type: application/json" \
   -d '{
     "id": 12345,
-    "metadata": {
-      "requestId": "req-001",
-      "clientIp": "192.168.1.100",
-      "userAgent": "Mozilla/5.0...",
-      "requestMethod": "POST",
-      "requestPath": "/api/users",
-      "responseStatus": 201,
-      "responseDuration": 156.23,
-      "extra": {
-        "traceId": "trace-abc-123",
-        "spanId": "span-def-456"
-      }
-    },
     "timestamp": 1733654342000,
     "logLevel": "INFO",
     "message": "User created successfully",
+    "metadata": {
+      "requestId": "req-001",
+      "requestMethod": "POST",
+      "requestPath": "/api/users",
+      "responseStatus": 201,
+      "responseDuration": 156.23
+    },
     "source": {
       "host": "api-server-01",
       "service": "user-service",
@@ -262,227 +209,114 @@ curl -X POST http://your-cluster-url:3000/api/v1/log \
   }'
 ```
 
-#### gRPC Endpoint
+### OTLP ingest
 
-**URL**: `your-cluster-url:3002`
-
-Use the `.proto` file in `log_ingestion_service/source_grpc/log_payload.proto` to generate client code.
-
-**Sample gRPC Call** (using grpcurl):
 ```bash
-grpcurl -plaintext -d '{
-  "entry": {
-    "id": 12345,
-    "metadata": {
-      "requestId": "req-001",
-      "clientIp": "192.168.1.100",
-      "userAgent": "Mozilla/5.0...",
-      "requestMethod": "POST", 
-      "requestPath": "/api/users",
-      "responseStatus": 201,
-      "responseDuration": 156.23,
-      "extra": {
-        "traceId": "trace-abc-123"
-      }
-    },
-    "timestamp": 1733654342000,
-    "logLevel": "INFO",
-    "message": "User created successfully",
-    "source": {
-      "host": "api-server-01",
-      "service": "user-service", 
-      "environment": "production"
-    }
-  }
-}' your-cluster-url:3002 logging.LoggingService/IngestLog
+go run ./examples/sample-client -mode otlp -message "hello otlp" -service demo
+# or both REST + OTLP
+go run ./examples/sample-client -mode both
 ```
 
-### Log Schema Reference
+### Query ClickHouse
+
+```bash
+docker exec apexio-clickhouse clickhouse-client --query \
+  "SELECT timestamp, service, log_level, message FROM apexio.logs ORDER BY timestamp DESC LIMIT 10"
+```
+
+### Log schema reference
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `id` | uint64 | Unique identifier for the log entry | ✅ |
-| `timestamp` | uint64 | Unix timestamp in milliseconds | ✅ |
-| `logLevel` | string | Log level (DEBUG, INFO, WARN, ERROR, FATAL) | ✅ |
-| `message` | string | Human-readable log message | ✅ |
-| `metadata` | object | Request/response metadata | ❌ |
-| `source` | object | Source system information | ❌ |
+| `id` | uint64 | Unique log identifier | ✅ |
+| `timestamp` | uint64 | Unix epoch milliseconds | ✅ |
+| `logLevel` | string | DEBUG, INFO, WARN, ERROR, FATAL | ✅ |
+| `message` | string | Log message | ✅ |
+| `metadata` | object | HTTP / request metadata | ❌ |
+| `source` | object | host, service, environment | ❌ |
 
-#### Metadata Schema
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `requestId` | string | Unique request identifier |
-| `clientIp` | string | Client IP address |
-| `userAgent` | string | User agent string |
-| `requestMethod` | string | HTTP method (GET, POST, etc.) |
-| `requestPath` | string | API endpoint path |
-| `responseStatus` | int32 | HTTP response code |
-| `responseDuration` | float64 | Response time in milliseconds |
-| `extra` | map<string,string> | Additional metadata |
-
-#### Source Schema
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `host` | string | Hostname or IP address |
-| `service` | string | Service name |
-| `environment` | string | Environment (dev, staging, prod) |
-| `extra` | map<string,string> | Additional source information |
-
-### Dashboard Features
-
-Once logs are flowing, access your Grafana dashboard to:
-
-- **Monitor Log Volume** - Track traffic patterns over time
-- **Analyze Error Rates** - Identify spikes in errors or failures
-- **View Recent Errors** - See detailed error logs in real-time
-- **Response Time Analysis** - Monitor application performance
-- **Status Code Distribution** - Understand response patterns
+Canonical in-process type: `schema.LogEvent` in [`pkg/schema`](pkg/schema/event.go).
 
 ## ⚙️ Configuration
 
-### Environment Variables
+Copy [`.env.example`](.env.example) to `.env` (never commit secrets).
 
-| Service | Variable | Default | Description |
-|---------|----------|---------|-------------|
-| All | `MESSAGE_BROKER` | `KAFKA` | Message broker type |
-| Log Ingestion | `PORT` | `3000`/`3002` | Service port |
-| Log Processing | `ELASTICSEARCH_URL` | - | Elasticsearch connection URL |
-| Kafka | `KAFKA_BROKERS` | `kafka:9092` | Kafka broker addresses |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GATEWAY_API_KEY` | _(empty)_ | Enable API-key auth when set |
+| `GATEWAY_API_KEY_HEADER` | `X-API-Key` | Header name for API key |
+| `REDPANDA_BROKERS` | `localhost:19092` | Kafka API brokers |
+| `LOG_TOPIC` | `logs.ingestion.raw.v1` | Ingest topic |
+| `CLICKHOUSE_ADDR` | `localhost:9000` | Native protocol |
+| `WRITER_BATCH_SIZE` | `50` | Events per flush |
+| `WRITER_FLUSH_INTERVAL` | `1s` | Time-based flush |
 
-### Customizing Message Brokers
+Broker delivery policy and backpressure: [`pkg/broker/README.md`](pkg/broker/README.md).
 
-Apexio supports pluggable message brokers. To use RabbitMQ instead of Kafka:
+### Bring your own auth / broker
 
-1. **Update the main.go in log_processing_service**:
-   ```go
-   DataStreamService, errorData := datastream.CreateDataStream(context.Background(), "RABBIT_MQ")
-   ```
+- **Auth** — extend or replace middleware in `cmd/gateway`; see `pkg/auth`
+- **Broker** — implement `broker.Broker`, wire in gateway + writer
+- **Store** — implement `store.Store` for alternate backends
 
-2. **Implement RabbitMQ service**:
-   Create `rabbitmq.go` implementing the `IDataStream` interface.
+## 🧪 Testing
 
-3. **Update configuration**:
-   Set `MESSAGE_BROKER=RABBIT_MQ` in your environment variables.
+```bash
+make test              # unit + contracts + k8s manifests (fast)
+make test-e2e          # compose E2E suite
+make test-k8s-e2e      # cluster smoke (opt-in, tears down namespace)
+make test-docs         # no legacy paths; README smoke checks
+```
 
-### Scaling Configuration
+Component tests: `make test-unit`, `test-contracts`, `test-infra`, `test-pipeline`, `test-otlp`, `test-grafana`, `test-auth`, `test-k8s`.
 
-For high-traffic environments, consider:
-
-- **Kafka Partitions**: Increase partitions for parallel processing
-- **Elasticsearch Shards**: Distribute data across multiple shards
-- **Replica Scaling**: Use Kubernetes HPA for auto-scaling
-- **Resource Limits**: Set appropriate CPU/memory limits
+Details: [test.md](test.md).
 
 ## 🛠️ Contributing
 
-We welcome contributions from the community! Here's how you can help:
+We welcome contributions!
 
-### Getting Started
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-change`
+3. Run `make test` (and `make test-e2e` for pipeline changes)
+4. Open a pull request
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes**
-4. **Test thoroughly**
-5. **Submit a pull request**
-
-### Development Setup
+### Development setup
 
 ```bash
-# Clone your fork
 git clone https://github.com/your-username/apexio.git
 cd apexio
-
-# Install Go dependencies
-cd log_ingestion_service/source_web && go mod download
-cd ../source_grpc && go mod download  
-cd ../../log_processing_service && go mod download
-
-# Run services locally
-docker-compose -f docker-compose.dev.yml up -d
-
-# Start individual services for development
-cd log_ingestion_service/source_web && go run main.go
+go test ./... -count=1
+make up
 ```
 
-### Contributing Guidelines
+### Areas for contribution
 
-#### Code Standards
-- **Language**: Go 1.21+ with standard formatting
-- **Documentation**: Comment all public functions and types
-- **Testing**: Include unit tests for new features
-- **Commits**: Use conventional commit messages
-
-#### Areas for Contribution
-
-**🎯 High Priority**
-- Docker Compose setup for easy local development
-- Helm charts for Kubernetes deployment
-- Additional message broker implementations (RabbitMQ, Redis)
-- Performance optimizations
-
-**🔧 Medium Priority**  
-- Log parsing and enrichment features
-- Alert rule templates
-- Multi-tenancy support
-- Log retention policies
-
-**🌟 Nice to Have**
-- Machine learning anomaly detection
-- Custom dashboard templates
-- Log forwarding to external systems
-- Mobile dashboard support
-
-#### Reporting Issues
-
-When reporting bugs:
-- Use the issue templates
-- Include reproduction steps
-- Attach relevant logs
-- Specify your environment details
-
-### Code Review Process
-
-1. All PRs require at least one review
-2. CI/CD checks must pass
-3. Documentation updates required for new features
-4. Breaking changes need migration guides
+- Helm chart or production K8s overlays
+- Additional broker implementations (NATS, RabbitMQ)
+- OTLP auth / TLS termination examples
+- Performance benchmarks and load tests
 
 ## 🗺️ Roadmap
 
-### Version 1.1 (Next Release)
-- [ ] Docker Compose setup
-- [ ] Helm chart deployment
-- [ ] Enhanced error handling
-- [ ] Performance benchmarks
+### Shipped
+- [x] Docker Compose full stack
+- [x] REST + OTLP ingest
+- [x] Redpanda → ClickHouse pipeline with batched writer
+- [x] Grafana dashboards as code
+- [x] Optional API-key auth
+- [x] Kubernetes manifests (Kustomize)
 
-### Version 1.2
-- [ ] RabbitMQ message broker support  
-- [ ] Log retention policies
-- [ ] Advanced filtering capabilities
-- [ ] API rate limiting
+### Next
+- [ ] Helm chart
+- [ ] Production hardening guide (TLS, HPA, backups)
+- [ ] Log retention / TTL policies in ClickHouse
+- [ ] Additional exporter examples
 
-### Version 2.0 (Future)
-- [ ] Machine learning anomaly detection
-- [ ] Multi-tenancy support
-- [ ] Advanced alerting rules
-- [ ] Log forwarding connectors
-
-### Security & Performance
-- [ ] TLS encryption for all communications
-- [ ] Authentication and authorization
-- [ ] Log sampling for high-volume systems
-- [ ] Distributed deployment patterns
-
-### Long-term Vision
-- [ ] AI-powered log analysis
-- [ ] Mobile dashboard application
-- [ ] SaaS offering option
-- [ ] Enterprise features (SSO, RBAC)
+### Future
+- [ ] Multi-tenancy patterns
+- [ ] Alert rule templates
+- [ ] OpenTelemetry traces correlation
 
 ---
 
@@ -490,7 +324,7 @@ When reporting bugs:
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Community
 

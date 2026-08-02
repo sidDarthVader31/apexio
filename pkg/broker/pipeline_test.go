@@ -10,7 +10,7 @@ import (
 )
 
 // TestPipelineContracts exercises Broker + Store together with memory backends,
-// mirroring the Phase 3 gateway→writer handoff without network I/O.
+// mirroring the gateway→writer handoff without network I/O.
 func TestPipelineContracts(t *testing.T) {
 	bus := broker.NewMemory()
 	defer bus.Close()

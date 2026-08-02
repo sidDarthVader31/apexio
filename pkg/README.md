@@ -1,31 +1,43 @@
-# Apexio packages
+# 📦 Apexio packages
 
-Shared contracts for the log pipeline.
+---
+
+Shared contracts for the log pipeline. All services import from here — **fork and extend** these interfaces for your org.
+
+## 🗂️ Layout
 
 | Package | Role |
 |---------|------|
-| [`pkg/schema`](schema/) | Canonical `LogEvent`, REST + OTLP-like mapping, broker JSON codec |
+| [`pkg/schema`](schema/) | Canonical `LogEvent`, REST + OTLP mapping, broker JSON codec |
 | [`pkg/broker`](broker/) | `Broker` / `Publisher` / `Consumer` + `Memory` + **Redpanda** |
 | [`pkg/store`](store/) | `Store.WriteBatch` + `Memory` + **ClickHouse** |
 | [`pkg/auth`](auth/) | Optional HTTP middleware (API-key example) |
 
-## Canonical event
+---
+
+## 📋 Canonical event
 
 `schema.LogEvent` aligns with ClickHouse `apexio.logs`:
 
-- identity: `timestamp`, `id`, `log_level`, `message`
-- source: `service`, `host`, `environment`
-- HTTP fields: `request_*`, `response_status`, `response_duration_ms`
-- `attrs` map for extras / OTLP attributes
+- **identity** — `timestamp`, `id`, `log_level`, `message`
+- **source** — `service`, `host`, `environment`
+- **HTTP** — `request_*`, `response_status`, `response_duration_ms`
+- **extras** — `attrs` map for OTLP attributes and custom fields
 
-REST ingest (`/api/v1/log`) maps through `schema.FromREST` / `ToREST`.
-Broker wire format is flat JSON via `MarshalEvent` / `UnmarshalEvent`.
+**Wire formats**
+
+- REST ingest (`/api/v1/log`) → `schema.FromREST` / `ToREST`
+- Broker payload → flat JSON via `MarshalEvent` / `UnmarshalEvent`
+- OTLP → `LogEventsFromOTLP` (HTTP `/v1/logs`, gRPC `:4317`)
+
 Default topic: `logs.ingestion.raw.v1` (`schema.DefaultTopic`).
 
-## Test
+---
+
+## 🧪 Test
 
 ```bash
 make test-unit
 # or
-go test ./pkg/...
+go test ./pkg/... -count=1
 ```

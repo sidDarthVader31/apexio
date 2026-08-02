@@ -1,7 +1,7 @@
 // Package schema defines the canonical log event used across Apexio services.
 //
 // Wire formats:
-//   - REST ingest JSON (legacy /api/v1/log body) via [FromREST] / [ToREST]
+//   - REST ingest JSON (/api/v1/log body) via [FromREST] / [ToREST]
 //   - Internal broker payload (flat JSON of LogEvent) via [MarshalEvent] / [UnmarshalEvent]
 //   - OTLP protobuf via [LogEventsFromOTLP] (HTTP /v1/logs and gRPC :4317)
 package schema
@@ -46,7 +46,7 @@ type LogEvent struct {
 	Attrs              map[string]string `json:"attrs,omitempty"`
 }
 
-// RESTPayload is the public HTTP ingest body (compatible with the legacy API).
+// RESTPayload is the public HTTP ingest body for POST /api/v1/log.
 type RESTPayload struct {
 	ID        uint64       `json:"id"`
 	Timestamp uint64       `json:"timestamp"` // epoch millis
@@ -64,7 +64,7 @@ type RESTMetadata struct {
 	RequestMethod      string            `json:"requestMethod"`
 	RequestPath        string            `json:"requestPath"`
 	ResponseStatus     int               `json:"responseStatus"`
-	ResponseDuration   float64           `json:"responseDuration"` // millis (legacy field name)
+	ResponseDuration   float64           `json:"responseDuration"` // millis in REST JSON
 	Extra              map[string]string `json:"extra"`
 }
 
@@ -178,7 +178,6 @@ func ToREST(e LogEvent) RESTPayload {
 }
 
 // FromOTLPLike maps OTLP-style resource/log attributes into a LogEvent.
-// Full OTLP protobuf decode is Phase 4; this covers the attribute contract early.
 func FromOTLPLike(ts time.Time, severity, body string, resourceAttrs, logAttrs map[string]string) (LogEvent, error) {
 	attrs := mergeAttrs(resourceAttrs, logAttrs)
 	ev := LogEvent{

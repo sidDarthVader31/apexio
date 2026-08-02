@@ -1,4 +1,4 @@
-// Sample client for Apexio Phase 4: sends REST and/or OTLP logs to the gateway.
+// Sample client: sends REST and/or OTLP logs to the gateway.
 package main
 
 import (
