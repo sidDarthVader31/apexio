@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  labels:
+    app.kubernetes.io/name: redpanda
+    app.kubernetes.io/part-of: apexio
+spec:
+  # Headless: pod DNS redpanda-0.redpanda.<ns>.svc.cluster.local (required for RPC advertise).
+  # If upgrading from a ClusterIP Service, delete it first: kubectl -n apexio delete svc redpanda
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: redpanda
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+    - name: rpc
+      port: 33145
+      targetPort: 33145
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redpanda-data
+  labels:
+    app.kubernetes.io/name: redpanda
+    app.kubernetes.io/part-of: apexio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redpanda
+  labels:
+    app.kubernetes.io/name: redpanda
+    app.kubernetes.io/part-of: apexio
+spec:
+  serviceName: redpanda
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redpanda
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redpanda
+        app.kubernetes.io/part-of: apexio
+    spec:
+      containers:
+        - name: redpanda
+          image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              FQDN="${POD_NAME}.redpanda.${POD_NAMESPACE}.svc.cluster.local"
+              exec rpk redpanda start \
+                --kafka-addr internal://0.0.0.0:9092 \
+                --advertise-kafka-addr "internal://${FQDN}:9092" \
+                --rpc-addr 0.0.0.0:33145 \
+                --advertise-rpc-addr "${FQDN}:33145" \
+                --mode dev-container \
+                --smp 1 \
+                --default-log-level=warn
+          ports:
+            - containerPort: 9092
+              name: kafka
+            - containerPort: 33145
+              name: rpc
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - rpk cluster health | grep -q 'Healthy.*true'
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/redpanda/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redpanda-data

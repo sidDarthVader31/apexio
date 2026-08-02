@@ -1,36 +1,22 @@
 #!/usr/bin/env bash
-# Phase 6 tests: auth middleware, writer batching, broker docs, API key E2E.
+# Auth middleware, writer metrics, broker docs, and API-key E2E (Docker Compose).
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=test-lib.sh
+source "${SCRIPT_DIR}/test-lib.sh"
 cd "${ROOT}"
 
-COMPOSE_FILE="${ROOT}/deploy/compose/docker-compose.yml"
-COMPOSE=(docker compose -f "${COMPOSE_FILE}")
 GATEWAY="${GATEWAY_URL:-http://127.0.0.1:18080}"
 WRITER_METRICS="${WRITER_METRICS_URL:-http://127.0.0.1:8081/metrics}"
-API_KEY="${GATEWAY_API_KEY:-phase6-test-key}"
+API_KEY="${GATEWAY_API_KEY:-auth-test-key}"
 API_HEADER="${GATEWAY_API_KEY_HEADER:-X-API-Key}"
-
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[0;33m'
-NC=$'\033[0m'
-
-pass() { echo -e "${GREEN}PASS${NC}: $*"; }
-fail() { echo -e "${RED}FAIL${NC}: $*"; exit 1; }
-info() { echo -e "${YELLOW}INFO${NC}: $*"; }
-
-REST_MSG="phase6-auth-$(date +%s)-$$"
-
-require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
-}
+REST_MSG="auth-smoke-$(date +%s)-$$"
 
 test_unit() {
   require_cmd go
   go test ./pkg/auth/... ./cmd/writer/... ./cmd/gateway/...
-  pass "unit tests (auth, writer batching, gateway)"
+  pass "auth and service unit tests"
 }
 
 test_env_example() {
@@ -48,24 +34,11 @@ test_broker_docs() {
   pass "broker delivery policy documented"
 }
 
-wait_http_ok() {
-  local url="$1"
-  local attempts="${2:-60}"
-  local i
-  for ((i = 1; i <= attempts; i++)); do
-    if curl -sf "${url}" >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 2
-  done
-  fail "timed out waiting for ${url}"
-}
-
 post_log() {
   local with_key="$1"
   local id="${RANDOM}${RANDOM}"
   if [[ "${with_key}" == "yes" ]]; then
-    curl -s -o /tmp/apexio-phase6-post.json -w '%{http_code}' \
+    curl -s -o /tmp/apexio-auth-post.json -w '%{http_code}' \
       -X POST "${GATEWAY}/api/v1/log" \
       -H 'Content-Type: application/json' \
       -H "${API_HEADER}: ${API_KEY}" \
@@ -76,19 +49,19 @@ post_log() {
       \"message\": \"${REST_MSG}\",
       \"metadata\": {
         \"requestMethod\": \"GET\",
-        \"requestPath\": \"/phase6\",
+        \"requestPath\": \"/auth-test\",
         \"responseStatus\": 200,
         \"responseDuration\": 12.5
       },
       \"source\": {
-        \"service\": \"phase6-hardening\",
+        \"service\": \"auth-test\",
         \"host\": \"localhost\",
         \"environment\": \"dev\"
       }
     }"
     return
   fi
-  curl -s -o /tmp/apexio-phase6-post.json -w '%{http_code}' \
+  curl -s -o /tmp/apexio-auth-post.json -w '%{http_code}' \
     -X POST "${GATEWAY}/api/v1/log" \
     -H 'Content-Type: application/json' \
     -d "{
@@ -98,12 +71,12 @@ post_log() {
       \"message\": \"${REST_MSG}\",
       \"metadata\": {
         \"requestMethod\": \"GET\",
-        \"requestPath\": \"/phase6\",
+        \"requestPath\": \"/auth-test\",
         \"responseStatus\": 200,
         \"responseDuration\": 12.5
       },
       \"source\": {
-        \"service\": \"phase6-hardening\",
+        \"service\": \"auth-test\",
         \"host\": \"localhost\",
         \"environment\": \"dev\"
       }
@@ -113,11 +86,11 @@ post_log() {
 test_api_key_auth() {
   local code
   code="$(post_log no)"
-  [[ "${code}" == "401" ]] || fail "expected 401 without API key, got ${code}: $(cat /tmp/apexio-phase6-post.json)"
+  [[ "${code}" == "401" ]] || fail "expected 401 without API key, got ${code}: $(cat /tmp/apexio-auth-post.json)"
   pass "ingest rejected without API key (401)"
 
   code="$(post_log yes)"
-  [[ "${code}" == "201" ]] || fail "expected 201 with API key, got ${code}: $(cat /tmp/apexio-phase6-post.json)"
+  [[ "${code}" == "201" ]] || fail "expected 201 with API key, got ${code}: $(cat /tmp/apexio-auth-post.json)"
   pass "ingest accepted with API key (201)"
 }
 
@@ -158,7 +131,7 @@ main() {
   test_broker_docs
   test_e2e
   echo
-  pass "Phase 6 hardening tests all passed"
+  pass "auth tests passed"
   info "Copy .env.example to .env and set GATEWAY_API_KEY to enable auth locally"
 }
 

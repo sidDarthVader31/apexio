@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: apexio
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 30080
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+      nodePort: 30417
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: apexio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gateway
+        app.kubernetes.io/part-of: apexio
+    spec:
+      initContainers:
+        - name: wait-redpanda
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nslookup redpanda.apexio.svc.cluster.local >/dev/null 2>&1; do
+                echo "waiting for redpanda DNS"
+                sleep 2
+              done
+      containers:
+        - name: gateway
+          image: apexio-gateway:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 4317
+              name: otlp-grpc
+          env:
+            - name: GATEWAY_ADDR
+              value: ":8080"
+            - name: GATEWAY_OTLP_GRPC_ADDR
+              value: ":4317"
+            - name: GATEWAY_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: apexio-config
+                  key: GATEWAY_API_KEY
+                  optional: true
+            - name: GATEWAY_API_KEY_HEADER
+              valueFrom:
+                configMapKeyRef:
+                  name: apexio-config
+                  key: GATEWAY_API_KEY_HEADER
+                  optional: true
+            - name: REDPANDA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: apexio-config
+                  key: REDPANDA_BROKERS
+            - name: REDPANDA_CLIENT_ID
+              value: apexio-gateway
+            - name: LOG_TOPIC
+              value: logs.ingestion.raw.v1
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3

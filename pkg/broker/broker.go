@@ -31,7 +31,7 @@ type Consumer interface {
 }
 
 // Broker is the full messaging abstraction (produce + consume).
-// Phase 3 wires Redpanda; tests use the in-memory implementation.
+// Default production wiring uses Redpanda; tests use the in-memory implementation.
 type Broker interface {
 	Publisher
 	Consumer

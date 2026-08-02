@@ -1,31 +1,17 @@
 #!/usr/bin/env bash
-# Phase 5 tests: Grafana dashboards provisioned from ClickHouse queries.
+# Grafana dashboard provisioning backed by ClickHouse.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=test-lib.sh
+source "${SCRIPT_DIR}/test-lib.sh"
 cd "${ROOT}"
 
-COMPOSE_FILE="${ROOT}/deploy/compose/docker-compose.yml"
-COMPOSE=(docker compose -f "${COMPOSE_FILE}")
 DASHBOARD_FILE="${ROOT}/deploy/grafana/provisioning/dashboards/json/apexio-logs.json"
 GATEWAY="${GATEWAY_URL:-http://127.0.0.1:18080}"
 GRAFANA="${GRAFANA_URL:-http://127.0.0.1:3000}"
 GRAFANA_AUTH="admin:admin"
-
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[0;33m'
-NC=$'\033[0m'
-
-pass() { echo -e "${GREEN}PASS${NC}: $*"; }
-fail() { echo -e "${RED}FAIL${NC}: $*"; exit 1; }
-info() { echo -e "${YELLOW}INFO${NC}: $*"; }
-
-SEED_PREFIX="phase5-seed-$(date +%s)-$$"
-
-require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
-}
+SEED_PREFIX="grafana-seed-$(date +%s)-$$"
 
 test_dashboard_file() {
   [[ -f "${DASHBOARD_FILE}" ]] || fail "missing dashboard ${DASHBOARD_FILE}"
@@ -57,19 +43,6 @@ PY
   pass "dashboard JSON valid (5 panels, ClickHouse datasource)"
 }
 
-wait_http_ok() {
-  local url="$1"
-  local attempts="${2:-60}"
-  local i
-  for ((i = 1; i <= attempts; i++)); do
-    if curl -sf "${url}" >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 2
-  done
-  fail "timed out waiting for ${url}"
-}
-
 post_log() {
   local message="$1"
   local level="$2"
@@ -77,7 +50,7 @@ post_log() {
   local duration="$4"
   local id="${RANDOM}${RANDOM}"
   local code
-  code="$(curl -s -o /tmp/apexio-phase5-post.json -w '%{http_code}' \
+  code="$(curl -s -o /tmp/apexio-grafana-post.json -w '%{http_code}' \
     -X POST "${GATEWAY}/api/v1/log" \
     -H 'Content-Type: application/json' \
     -d "{
@@ -87,17 +60,17 @@ post_log() {
       \"message\": \"${message}\",
       \"metadata\": {
         \"requestMethod\": \"GET\",
-        \"requestPath\": \"/phase5\",
+        \"requestPath\": \"/grafana-test\",
         \"responseStatus\": ${status},
         \"responseDuration\": ${duration}
       },
       \"source\": {
-        \"service\": \"phase5-dashboard\",
+        \"service\": \"grafana-dashboard\",
         \"host\": \"localhost\",
         \"environment\": \"dev\"
       }
     }")"
-  [[ "${code}" == "201" ]] || fail "seed ingest failed (${code}): $(cat /tmp/apexio-phase5-post.json)"
+  [[ "${code}" == "201" ]] || fail "seed ingest failed (${code}): $(cat /tmp/apexio-grafana-post.json)"
 }
 
 seed_clickhouse_data() {
@@ -189,7 +162,7 @@ main() {
   test_dashboard_file
   test_e2e
   echo
-  pass "Phase 5 Grafana dashboard tests all passed"
+  pass "Grafana tests passed"
   info "Open ${GRAFANA}/d/apexio-logs/apexio-logs (admin/admin)"
 }
 

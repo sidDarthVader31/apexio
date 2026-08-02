@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: apexio
+
+resources:
+  - k8s
+
+configMapGenerator:
+  - name: clickhouse-init
+    options:
+      disableNameSuffixHash: true
+    files:
+      - 01_schema.sql=clickhouse/init/01_schema.sql
+  - name: grafana-datasources
+    options:
+      disableNameSuffixHash: true
+    files:
+      - clickhouse.yaml=grafana/provisioning/datasources/clickhouse.yaml
+  - name: grafana-dashboards-config
+    options:
+      disableNameSuffixHash: true
+    files:
+      - dashboards.yaml=grafana/provisioning/dashboards/dashboards.yaml
+  - name: grafana-dashboards-json
+    options:
+      disableNameSuffixHash: true
+    files:
+      - apexio-logs.json=grafana/provisioning/dashboards/json/apexio-logs.json

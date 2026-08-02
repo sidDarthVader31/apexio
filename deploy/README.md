@@ -15,15 +15,25 @@ docker compose -f deploy/compose/docker-compose.yml up -d --build
 Verify:
 
 ```bash
-make test-phase1   # infra
-make test-phase2   # contracts
-make test-phase3   # REST vertical slice
-make test-phase4   # OTLP + sample client
-make test-phase5   # Grafana dashboards (ClickHouse)
-make test-phase6   # Auth, writer batching, broker docs
+make test              # unit + contracts + k8s manifests (fast)
+make test-e2e          # full compose E2E suite
+make test-k8s-e2e      # optional cluster smoke (kind/minikube)
 ```
 
-### Grafana dashboards (Phase 5)
+Individual component tests:
+
+```bash
+make test-unit         # Go unit/race tests
+make test-contracts    # pkg layout + unit tests
+make test-infra        # Redpanda, ClickHouse, Grafana (compose)
+make test-pipeline     # REST → Redpanda → ClickHouse
+make test-otlp         # OTLP HTTP + sample client
+make test-grafana      # provisioned dashboards
+make test-auth         # API-key middleware + writer metrics
+make test-k8s          # kubectl kustomize validation
+```
+
+### Grafana dashboards
 
 After `make up`, open [http://127.0.0.1:3000/d/apexio-logs/apexio-logs](http://127.0.0.1:3000/d/apexio-logs/apexio-logs) (`admin` / `admin`).
 
@@ -147,6 +157,7 @@ make clean-volumes
 ## Layout
 
 - [`compose/docker-compose.yml`](compose/docker-compose.yml) — stack definition
+- [`k8s/`](k8s/) — Kubernetes manifests (Kustomize) for kind/minikube
 - [`../.env.example`](../.env.example) — configuration template (copy to `.env`, never commit secrets)
 - [`clickhouse/init/01_schema.sql`](clickhouse/init/01_schema.sql) — `apexio.logs` table
 - [`grafana/provisioning/`](grafana/provisioning/) — ClickHouse datasource + **Apexio Logs** dashboard (as code)
