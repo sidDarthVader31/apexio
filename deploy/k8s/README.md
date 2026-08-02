@@ -120,7 +120,7 @@ kubectl -n apexio delete pod redpanda-0
 
 ```bash
 make test-k8s          # manifest validation only (fast)
-make test-k8s-e2e      # cluster smoke (kind or minikube)
+make test-k8s-e2e      # cluster smoke; tears down namespace and cluster on exit
 ```
 
-`test-k8s` compiles binaries on the host when E2E runs (avoids slow in-Docker `go build`). Set `APEXIO_K8S_REBUILD=1` to force image rebuild; existing `apexio-*:local` images are reused by default.
+`test-k8s-e2e` compiles binaries on the host when E2E runs. Set `APEXIO_K8S_REBUILD=1` to force image rebuild; existing `apexio-*:local` images are reused by default.

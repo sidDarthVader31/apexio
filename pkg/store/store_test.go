@@ -72,7 +72,7 @@ func TestClickHouseConfigValidation(t *testing.T) {
 		t.Fatal("expected error for empty DSN/Addr")
 	}
 	// Construction without a live server fails on ping — that is expected here.
-	_, err := store.NewClickHouse(store.ClickHouseConfig{Addr: "127.0.0.1:1"})
+	_, err := store.NewClickHouse(store.ClickHouseConfig{Addr: "127.0.0.1:1", PingAttempts: 1})
 	if err == nil {
 		t.Fatal("expected ping/open failure against closed port")
 	}

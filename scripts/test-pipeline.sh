@@ -12,6 +12,7 @@ SMOKE_MSG="pipeline-smoke-$(date +%s)-$$"
 test_e2e() {
   require_cmd docker
   require_cmd curl
+  register_compose_cleanup
 
   info "building and starting compose stack"
   "${COMPOSE[@]}" up -d --build

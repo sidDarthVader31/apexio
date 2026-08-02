@@ -112,6 +112,7 @@ wait_writer_metrics() {
 test_e2e() {
   require_cmd docker
   require_cmd curl
+  register_compose_cleanup
 
   info "starting stack with GATEWAY_API_KEY enabled"
   GATEWAY_API_KEY="${API_KEY}" GATEWAY_API_KEY_HEADER="${API_HEADER}" \

@@ -157,6 +157,7 @@ test_grafana() {
 main() {
   require_cmd docker
   require_cmd curl
+  register_compose_cleanup
   info "infra tests (root=${ROOT})"
   test_compose_file
   test_stack_up

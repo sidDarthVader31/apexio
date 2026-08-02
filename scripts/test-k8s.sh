@@ -10,6 +10,26 @@ K8S_KUSTOMIZE="${ROOT}/deploy"
 CLUSTER_NAME="${KIND_CLUSTER_NAME:-apexio}"
 SMOKE_MSG="k8s-smoke-$(date +%s)-$$"
 
+KIND_CREATED_BY_TEST=0
+MINIKUBE_USED=0
+K8S_PF_PID=""
+
+k8s_teardown() {
+  info "tearing down kubernetes test resources"
+  if [[ -n "${K8S_PF_PID}" ]]; then
+    kill "${K8S_PF_PID}" 2>/dev/null || true
+  fi
+  kubectl delete namespace apexio --ignore-not-found=true --wait=true >/dev/null 2>&1 || true
+  if [[ "${KIND_CREATED_BY_TEST}" == "1" ]]; then
+    info "deleting kind cluster ${CLUSTER_NAME}"
+    kind delete cluster --name "${CLUSTER_NAME}" 2>/dev/null || true
+  fi
+  if [[ "${MINIKUBE_USED}" == "1" ]]; then
+    info "deleting minikube cluster"
+    minikube delete 2>/dev/null || true
+  fi
+}
+
 test_manifests() {
   require_cmd kubectl
   kubectl kustomize "${K8S_KUSTOMIZE}" >/dev/null
@@ -24,7 +44,6 @@ image_exists() {
   docker image inspect "$1" >/dev/null 2>&1
 }
 
-# Host compile + thin image layers — avoids multi-minute in-docker go builds.
 build_app_images() {
   require_cmd go
   require_cmd docker
@@ -66,6 +85,23 @@ load_images_kind() {
   kind load docker-image apexio-writer:local --name "${CLUSTER_NAME}"
 }
 
+wait_writer_metrics_k8s() {
+  local i body
+  kubectl -n apexio port-forward svc/writer 18081:8081 >/tmp/apexio-k8s-writer-pf.log 2>&1 &
+  local wpf=$!
+  sleep 2
+  for ((i = 1; i <= 60; i++)); do
+    body="$(curl -sf "http://127.0.0.1:18081/metrics" 2>/dev/null || true)"
+    if echo "${body}" | awk '/apexio_writer_events_written_total / { if ($2+0 > 0) found=1 } END { exit !found }'; then
+      kill "${wpf}" 2>/dev/null || true
+      return 0
+    fi
+    sleep 2
+  done
+  kill "${wpf}" 2>/dev/null || true
+  fail "writer metrics show no events written"
+}
+
 deploy_and_smoke() {
   info "deploying stack to namespace apexio"
   kubectl delete namespace apexio --ignore-not-found=true --wait=true >/dev/null 2>&1 || true
@@ -77,9 +113,11 @@ deploy_and_smoke() {
   kubectl -n apexio rollout status deployment/writer --timeout=300s
   pass "all apexio workloads ready"
 
+  ensure_k8s_clickhouse_schema
+  pass "ClickHouse schema present"
+
   kubectl -n apexio port-forward svc/gateway 18080:8080 >/tmp/apexio-k8s-pf.log 2>&1 &
-  local pf_pid=$!
-  trap 'kill "${pf_pid}" 2>/dev/null || true' EXIT
+  K8S_PF_PID=$!
 
   wait_http_ok "http://127.0.0.1:18080/healthz" 60
   pass "gateway healthz via port-forward"
@@ -108,7 +146,10 @@ deploy_and_smoke() {
   [[ "${code}" == "201" ]] || fail "ingest failed (${code}): $(cat /tmp/apexio-k8s-post.json)"
   pass "REST ingest via k8s gateway (201)"
 
-  wait_clickhouse_message "${SMOKE_MSG}"
+  wait_writer_metrics_k8s
+  pass "writer processed events"
+
+  wait_clickhouse_message_k8s "${SMOKE_MSG}"
   pass "log visible in ClickHouse"
 }
 
@@ -116,6 +157,7 @@ run_kind_e2e() {
   if ! kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"; then
     info "creating kind cluster ${CLUSTER_NAME}"
     kind create cluster --name "${CLUSTER_NAME}" --wait 120s
+    KIND_CREATED_BY_TEST=1
   fi
   kubectl config use-context "kind-${CLUSTER_NAME}" >/dev/null
   build_app_images
@@ -124,6 +166,7 @@ run_kind_e2e() {
 }
 
 run_minikube_e2e() {
+  MINIKUBE_USED=1
   minikube start --driver=docker
   eval "$(minikube docker-env)"
   build_app_images
@@ -132,6 +175,7 @@ run_minikube_e2e() {
 
 test_cluster_e2e() {
   require_cmd docker
+  register_cleanup k8s_teardown
 
   if command -v kind >/dev/null 2>&1; then
     run_kind_e2e

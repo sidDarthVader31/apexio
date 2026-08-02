@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -20,6 +21,8 @@ type ClickHouseConfig struct {
 	Table    string
 	Username string
 	Password string
+	// PingAttempts is the number of Ping tries on connect (default 30, ~60s total).
+	PingAttempts int
 }
 
 // ClickHouse implements Store with bulk inserts into apexio.logs.
@@ -72,11 +75,20 @@ func NewClickHouse(cfg ClickHouseConfig) (*ClickHouse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("clickhouse: open: %w", err)
 	}
-	if err := conn.Ping(context.Background()); err != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("clickhouse: ping: %w", err)
+	var pingErr error
+	attempts := cfg.PingAttempts
+	if attempts < 1 {
+		attempts = 30
 	}
-	return &ClickHouse{cfg: cfg, conn: conn}, nil
+	for attempt := 1; attempt <= attempts; attempt++ {
+		pingErr = conn.Ping(context.Background())
+		if pingErr == nil {
+			return &ClickHouse{cfg: cfg, conn: conn}, nil
+		}
+		time.Sleep(2 * time.Second)
+	}
+	_ = conn.Close()
+	return nil, fmt.Errorf("clickhouse: ping: %w", pingErr)
 }
 
 // WriteBatch inserts events in a single prepared batch.

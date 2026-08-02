@@ -16,9 +16,11 @@ Verify:
 
 ```bash
 make test              # unit + contracts + k8s manifests (fast)
-make test-e2e          # full compose E2E suite
-make test-k8s-e2e      # optional cluster smoke (kind/minikube)
+make test-e2e          # compose E2E suite (stops stack on exit)
+make test-k8s-e2e      # cluster smoke (deletes namespace; minikube/kind if created)
 ```
+
+E2E tests register an `EXIT` trap and run `docker compose down -v` or `kubectl delete namespace apexio` (and delete the kind/minikube cluster when the test created it).
 
 Individual component tests:
 

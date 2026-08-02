@@ -64,7 +64,7 @@ test-auth:
 test-k8s:
 	./scripts/test-k8s.sh
 
-## Kubernetes cluster smoke (requires kind or minikube; set APEXIO_K8S_E2E=1)
+## Kubernetes cluster smoke (requires kind or minikube; tears down namespace/cluster on exit)
 test-k8s-e2e:
 	APEXIO_K8S_E2E=1 ./scripts/test-k8s.sh
 

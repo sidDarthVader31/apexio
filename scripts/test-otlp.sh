@@ -15,6 +15,7 @@ test_e2e() {
   require_cmd docker
   require_cmd curl
   require_cmd go
+  register_compose_cleanup
 
   info "building and starting compose stack"
   "${COMPOSE[@]}" up -d --build

@@ -34,16 +34,50 @@ spec:
         app.kubernetes.io/part-of: apexio
     spec:
       initContainers:
+        - name: wait-clickhouse
+          image: busybox:1.36
+          command:
+            - sh
+            - -ec
+            - |
+              until wget -qO- http://clickhouse.apexio.svc.cluster.local:8123/ping 2>/dev/null | grep -q Ok; do
+                echo "waiting for clickhouse HTTP"
+                sleep 2
+              done
+              until nc -z clickhouse.apexio.svc.cluster.local 9000; do
+                echo "waiting for clickhouse native"
+                sleep 2
+              done
         - name: wait-redpanda
           image: busybox:1.36
           command:
             - sh
-            - -c
+            - -ec
             - |
-              until nslookup redpanda.apexio.svc.cluster.local >/dev/null 2>&1; do
-                echo "waiting for redpanda DNS"
+              until nc -z redpanda.apexio.svc.cluster.local 9092; do
+                echo "waiting for redpanda kafka"
                 sleep 2
               done
+        - name: ensure-schema
+          image: clickhouse/clickhouse-server:24.12
+          command:
+            - sh
+            - -ec
+            - |
+              for i in $(seq 1 60); do
+                if clickhouse-client --host clickhouse.apexio.svc.cluster.local --query \
+                  "SELECT count() FROM system.tables WHERE database='apexio' AND name='logs'" 2>/dev/null | grep -q '^1$'; then
+                  exit 0
+                fi
+                clickhouse-client --host clickhouse.apexio.svc.cluster.local --multiquery < /schema/01_schema.sql 2>/dev/null || true
+                sleep 2
+              done
+              echo "apexio.logs not ready"
+              exit 1
+          volumeMounts:
+            - name: clickhouse-init
+              mountPath: /schema
+              readOnly: true
       containers:
         - name: writer
           image: apexio-writer:local
@@ -91,3 +125,7 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 5
             timeoutSeconds: 3
+      volumes:
+        - name: clickhouse-init
+          configMap:
+            name: clickhouse-init
