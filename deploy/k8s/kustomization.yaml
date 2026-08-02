@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - configmap-apexio.yaml
+  - redpanda.yaml
+  - clickhouse.yaml
+  - grafana.yaml
+  - gateway.yaml
+  - writer.yaml
+
+images:
+  - name: apexio-gateway
+    newName: apexio-gateway
+    newTag: local
+  - name: apexio-writer
+    newName: apexio-writer
+    newTag: local

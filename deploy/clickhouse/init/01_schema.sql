@@ -1,4 +1,4 @@
--- Apexio Phase 1: canonical logs table for access-log / OTLP-shaped events.
+-- Apexio: canonical logs table for access-log / OTLP-shaped events.
 -- Applied on first ClickHouse container start via /docker-entrypoint-initdb.d.
 
 CREATE DATABASE IF NOT EXISTS apexio;

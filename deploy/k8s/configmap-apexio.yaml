@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apexio-config
+  labels:
+    app.kubernetes.io/part-of: apexio
+data:
+  # Optional API key auth (empty = disabled). Patch or use kustomize replacements in your overlay.
+  GATEWAY_API_KEY: ""
+  GATEWAY_API_KEY_HEADER: X-API-Key
+  # FQDNs avoid short-name DNS issues across namespaces / headless services.
+  REDPANDA_BROKERS: redpanda.apexio.svc.cluster.local:9092
+  CLICKHOUSE_ADDR: clickhouse.apexio.svc.cluster.local:9000

@@ -1,50 +1,18 @@
 #!/usr/bin/env bash
-# Phase 3 vertical-slice tests: unit + E2E (REST → Redpanda → ClickHouse).
+# End-to-end pipeline smoke: REST ingest → Redpanda → ClickHouse (Docker Compose).
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=test-lib.sh
+source "${SCRIPT_DIR}/test-lib.sh"
 cd "${ROOT}"
 
-COMPOSE_FILE="${ROOT}/deploy/compose/docker-compose.yml"
-COMPOSE=(docker compose -f "${COMPOSE_FILE}")
-
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[0;33m'
-NC=$'\033[0m'
-
-pass() { echo -e "${GREEN}PASS${NC}: $*"; }
-fail() { echo -e "${RED}FAIL${NC}: $*"; exit 1; }
-info() { echo -e "${YELLOW}INFO${NC}: $*"; }
-
-SMOKE_MSG="phase3-smoke-$(date +%s)-$$"
-
-require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
-}
-
-test_unit() {
-  info "running unit tests"
-  go test ./pkg/... ./cmd/... -count=1 -timeout 120s
-  pass "unit tests"
-}
-
-wait_http_ok() {
-  local url="$1"
-  local attempts="${2:-60}"
-  local i
-  for ((i = 1; i <= attempts; i++)); do
-    if curl -sf "${url}" >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 2
-  done
-  fail "timed out waiting for ${url}"
-}
+SMOKE_MSG="pipeline-smoke-$(date +%s)-$$"
 
 test_e2e() {
   require_cmd docker
   require_cmd curl
+  register_compose_cleanup
 
   info "building and starting compose stack"
   "${COMPOSE[@]}" up -d --build
@@ -53,7 +21,6 @@ test_e2e() {
   wait_http_ok "http://127.0.0.1:8081/healthz" 90
   pass "gateway and writer healthy"
 
-  # Invalid payload must NOT return 201
   local bad_code
   bad_code="$(curl -s -o /tmp/apexio-bad.json -w '%{http_code}' \
     -X POST "http://127.0.0.1:18080/api/v1/log" \
@@ -72,18 +39,18 @@ test_e2e() {
   "logLevel": "INFO",
   "message": "${SMOKE_MSG}",
   "metadata": {
-    "requestId": "phase3-req",
+    "requestId": "pipeline-req",
     "clientIp": "127.0.0.1",
-    "userAgent": "phase3-test",
+    "userAgent": "pipeline-test",
     "requestMethod": "POST",
     "requestPath": "/api/v1/log",
     "responseStatus": 201,
     "responseDuration": 12.5,
-    "extra": {"traceId": "phase3"}
+    "extra": {"traceId": "pipeline"}
   },
   "source": {
     "host": "localhost",
-    "service": "phase3-test",
+    "service": "pipeline-test",
     "environment": "dev"
   }
 }
@@ -99,25 +66,12 @@ EOF
   pass "ingest returned 201"
 
   info "waiting for row in ClickHouse"
-  local found=0
-  local i count
-  for ((i = 1; i <= 45; i++)); do
-    count="$(docker exec apexio-clickhouse clickhouse-client --query \
-      "SELECT count() FROM apexio.logs WHERE message = '${SMOKE_MSG}'" 2>/dev/null || echo 0)"
-    if [[ "${count}" -ge 1 ]]; then
-      found=1
-      break
-    fi
-    sleep 2
-  done
-  [[ "${found}" == "1" ]] || fail "message never appeared in ClickHouse: ${SMOKE_MSG}"
+  wait_clickhouse_message "${SMOKE_MSG}"
   pass "log visible in ClickHouse"
 
-  # Named volumes survive a bounce (stop/start, not recreate -v)
   info "bouncing stack to verify volume durability"
   "${COMPOSE[@]}" stop gateway writer redpanda clickhouse
   "${COMPOSE[@]}" start clickhouse redpanda
-  # wait for clickhouse before writer
   local i
   for ((i = 1; i <= 60; i++)); do
     if docker exec apexio-clickhouse clickhouse-client --query "SELECT 1" >/dev/null 2>&1; then
@@ -128,6 +82,7 @@ EOF
   "${COMPOSE[@]}" start gateway writer
   wait_http_ok "http://127.0.0.1:18080/healthz" 90
   wait_http_ok "http://127.0.0.1:8081/healthz" 90
+  local count
   count="$(docker exec apexio-clickhouse clickhouse-client --query \
     "SELECT count() FROM apexio.logs WHERE message = '${SMOKE_MSG}'")"
   [[ "${count}" -ge 1 ]] || fail "ClickHouse data lost after bounce"
@@ -135,11 +90,9 @@ EOF
 }
 
 main() {
-  require_cmd go
-  test_unit
   test_e2e
   echo
-  pass "Phase 3 vertical-slice tests all passed"
+  pass "pipeline tests passed"
 }
 
 main "$@"

@@ -1,24 +1,10 @@
 #!/usr/bin/env bash
-# Phase 1 infra smoke tests.
-# Exit 0 only when Redpanda, ClickHouse (schema), and Grafana (datasource) all pass.
+# Compose infrastructure: Redpanda, ClickHouse schema, Grafana datasource.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMPOSE_FILE="${ROOT}/deploy/compose/docker-compose.yml"
-COMPOSE=(docker compose -f "${COMPOSE_FILE}")
-
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[0;33m'
-NC=$'\033[0m'
-
-pass() { echo -e "${GREEN}PASS${NC}: $*"; }
-fail() { echo -e "${RED}FAIL${NC}: $*"; exit 1; }
-info() { echo -e "${YELLOW}INFO${NC}: $*"; }
-
-require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || fail "required command not found: $1"
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=test-lib.sh
+source "${SCRIPT_DIR}/test-lib.sh"
 
 wait_for_healthy() {
   local service="$1"
@@ -135,13 +121,13 @@ test_clickhouse_schema() {
        request_id, client_ip, user_agent, request_method, request_path,
        response_status, response_duration_ms, attrs)
     VALUES
-      (now64(3), 1, 'INFO', 'phase1-smoke', 'apexio-test', 'localhost', 'dev',
+      (now64(3), 1, 'INFO', 'infra-smoke', 'apexio-test', 'localhost', 'dev',
        'req-1', '127.0.0.1', 'smoke', 'GET', '/health',
-       200, 1.5, map('traceId', 'phase1'))
+       200, 1.5, map('traceId', 'infra'))
   "
   local count
   count="$(docker exec apexio-clickhouse clickhouse-client --query \
-    "SELECT count() FROM apexio.logs WHERE message = 'phase1-smoke'")"
+    "SELECT count() FROM apexio.logs WHERE message = 'infra-smoke'")"
   [[ "${count}" -ge 1 ]] || fail "smoke insert not readable (count=${count})"
 
   pass "ClickHouse schema present and writable"
@@ -171,14 +157,15 @@ test_grafana() {
 main() {
   require_cmd docker
   require_cmd curl
-  info "Phase 1 infra tests (root=${ROOT})"
+  register_compose_cleanup
+  info "infra tests (root=${ROOT})"
   test_compose_file
   test_stack_up
   test_redpanda
   test_clickhouse_schema
   test_grafana
   echo
-  pass "Phase 1 infra tests all passed"
+  pass "infra tests passed"
 }
 
 main "$@"

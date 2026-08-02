@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: writer
+  labels:
+    app.kubernetes.io/name: writer
+    app.kubernetes.io/part-of: apexio
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: writer
+  ports:
+    - name: health
+      port: 8081
+      targetPort: health
+      nodePort: 30081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer
+  labels:
+    app.kubernetes.io/name: writer
+    app.kubernetes.io/part-of: apexio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: writer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: writer
+        app.kubernetes.io/part-of: apexio
+    spec:
+      initContainers:
+        - name: wait-clickhouse
+          image: busybox:1.36
+          command:
+            - sh
+            - -ec
+            - |
+              until wget -qO- http://clickhouse.apexio.svc.cluster.local:8123/ping 2>/dev/null | grep -q Ok; do
+                echo "waiting for clickhouse HTTP"
+                sleep 2
+              done
+              until nc -z clickhouse.apexio.svc.cluster.local 9000; do
+                echo "waiting for clickhouse native"
+                sleep 2
+              done
+        - name: wait-redpanda
+          image: busybox:1.36
+          command:
+            - sh
+            - -ec
+            - |
+              until nc -z redpanda.apexio.svc.cluster.local 9092; do
+                echo "waiting for redpanda kafka"
+                sleep 2
+              done
+        - name: ensure-schema
+          image: clickhouse/clickhouse-server:24.12
+          command:
+            - sh
+            - -ec
+            - |
+              for i in $(seq 1 60); do
+                if clickhouse-client --host clickhouse.apexio.svc.cluster.local --query \
+                  "SELECT count() FROM system.tables WHERE database='apexio' AND name='logs'" 2>/dev/null | grep -q '^1$'; then
+                  exit 0
+                fi
+                clickhouse-client --host clickhouse.apexio.svc.cluster.local --multiquery < /schema/01_schema.sql 2>/dev/null || true
+                sleep 2
+              done
+              echo "apexio.logs not ready"
+              exit 1
+          volumeMounts:
+            - name: clickhouse-init
+              mountPath: /schema
+              readOnly: true
+      containers:
+        - name: writer
+          image: apexio-writer:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: health
+          env:
+            - name: WRITER_HEALTH_ADDR
+              value: ":8081"
+            - name: REDPANDA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: apexio-config
+                  key: REDPANDA_BROKERS
+            - name: REDPANDA_CLIENT_ID
+              value: apexio-writer
+            - name: REDPANDA_GROUP_ID
+              value: apexio-writer
+            - name: LOG_TOPIC
+              value: logs.ingestion.raw.v1
+            - name: CLICKHOUSE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: apexio-config
+                  key: CLICKHOUSE_ADDR
+            - name: CLICKHOUSE_DATABASE
+              value: apexio
+            - name: CLICKHOUSE_TABLE
+              value: logs
+            - name: CLICKHOUSE_USER
+              value: default
+            - name: WRITER_BATCH_SIZE
+              value: "50"
+            - name: WRITER_FLUSH_INTERVAL
+              value: 1s
+            - name: WRITER_MAX_RETRIES
+              value: "3"
+            - name: WRITER_RETRY_BACKOFF
+              value: 200ms
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 3
+      volumes:
+        - name: clickhouse-init
+          configMap:
+            name: clickhouse-init

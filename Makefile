@@ -1,7 +1,9 @@
 COMPOSE_FILE := deploy/compose/docker-compose.yml
 COMPOSE := docker compose -f $(COMPOSE_FILE)
 
-.PHONY: up down logs ps test-phase1 test-phase2 test-phase3 test-phase4 test-phase5 test-phase6 restart clean-volumes
+.PHONY: up down logs ps restart clean-volumes \
+	test test-unit test-contracts test-infra test-pipeline test-otlp test-grafana test-auth test-k8s test-k8s-e2e test-e2e \
+	k8s-apply k8s-delete
 
 ## Start stack (infra + gateway + writer); rebuild app images
 up:
@@ -27,26 +29,52 @@ restart:
 clean-volumes:
 	$(COMPOSE) down -v
 
-## Run Phase 1 infra smoke tests (starts stack if needed)
-test-phase1:
-	./scripts/test-phase1.sh
+## Fast default: unit + contract layout + k8s manifest validation
+test: test-unit test-contracts test-k8s
 
-## Run Phase 2 shared-contract unit tests
-test-phase2:
-	./scripts/test-phase2.sh
+## Go unit and race tests
+test-unit:
+	./scripts/test-unit.sh
 
-## Run Phase 3 unit + E2E vertical-slice tests
-test-phase3:
-	./scripts/test-phase3.sh
+## Shared package layout + unit tests
+test-contracts:
+	./scripts/test-contracts.sh
 
-## Run Phase 4 OTLP + sample-client tests
-test-phase4:
-	./scripts/test-phase4.sh
+## Compose infra: Redpanda, ClickHouse schema, Grafana datasource
+test-infra:
+	./scripts/test-infra.sh
 
-## Run Phase 5 Grafana dashboard provisioning tests
-test-phase5:
-	./scripts/test-phase5.sh
+## E2E REST ingest through full compose pipeline
+test-pipeline:
+	./scripts/test-pipeline.sh
 
-## Run Phase 6 hardening tests (auth, batching, broker docs)
-test-phase6:
-	./scripts/test-phase6.sh
+## OTLP HTTP ingest + sample client
+test-otlp:
+	./scripts/test-otlp.sh
+
+## Grafana dashboard provisioning
+test-grafana:
+	./scripts/test-grafana.sh
+
+## API-key auth, writer metrics, broker docs
+test-auth:
+	./scripts/test-auth.sh
+
+## Kubernetes manifest validation (no cluster required)
+test-k8s:
+	./scripts/test-k8s.sh
+
+## Kubernetes cluster smoke (requires kind or minikube; tears down namespace/cluster on exit)
+test-k8s-e2e:
+	APEXIO_K8S_E2E=1 ./scripts/test-k8s.sh
+
+## All Docker Compose E2E component tests
+test-e2e: test-infra test-pipeline test-otlp test-grafana test-auth
+
+## Apply Kubernetes stack (requires images loaded into cluster)
+k8s-apply:
+	kubectl apply -k deploy
+
+## Remove Kubernetes stack (keeps kind/minikube cluster)
+k8s-delete:
+	kubectl delete -k deploy --ignore-not-found
