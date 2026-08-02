@@ -89,7 +89,7 @@ func TestMemoryImplementsBroker(t *testing.T) {
 	var _ broker.Broker = broker.NewMemory()
 }
 
-func TestRedpandaStub(t *testing.T) {
+func TestRedpandaConfigValidation(t *testing.T) {
 	if _, err := broker.NewRedpanda(broker.RedpandaConfig{}); err == nil {
 		t.Fatal("expected error for empty brokers")
 	}
@@ -100,15 +100,10 @@ func TestRedpandaStub(t *testing.T) {
 	defer rp.Close()
 
 	var _ broker.Broker = rp
-
-	err = rp.Publish(context.Background(), schema.DefaultTopic, sampleEvent(t))
-	if !errors.Is(err, broker.ErrNotImplemented) {
-		t.Fatalf("expected ErrNotImplemented, got %v", err)
+	if rp.Config().GroupID != "apexio-writer" {
+		t.Fatalf("default group=%q", rp.Config().GroupID)
 	}
-	err = rp.Subscribe(context.Background(), []string{schema.DefaultTopic}, func(ctx context.Context, msg broker.Message) error {
-		return nil
-	})
-	if !errors.Is(err, broker.ErrNotImplemented) {
-		t.Fatalf("expected ErrNotImplemented, got %v", err)
+	if rp.Config().ClientID != "apexio" {
+		t.Fatalf("default client=%q", rp.Config().ClientID)
 	}
 }

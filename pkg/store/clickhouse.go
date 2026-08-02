@@ -4,46 +4,92 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/sidDarthVader31/apexio/pkg/schema"
 )
 
-// ErrNotImplemented is returned by thin Phase-2 stubs until Phase 3 wires clients.
-var ErrNotImplemented = errors.New("store backend not implemented yet")
-
-// ClickHouseConfig holds connection settings for the future ClickHouse client.
+// ClickHouseConfig holds connection settings for ClickHouse.
+// Provide either DSN or Addr (+ optional auth/database).
 type ClickHouseConfig struct {
 	DSN      string // e.g. clickhouse://default@localhost:9000/apexio
+	Addr     string // e.g. localhost:9000 or clickhouse:9000
 	Database string
 	Table    string
+	Username string
+	Password string
 }
 
-// ClickHouse is a thin stub satisfying Store. Real client wiring is Phase 3.
+// ClickHouse implements Store with bulk inserts into apexio.logs.
 type ClickHouse struct {
-	cfg    ClickHouseConfig
+	cfg  ClickHouseConfig
+	conn driver.Conn
+
+	mu     sync.Mutex
 	closed bool
 }
 
-// NewClickHouse validates config and returns a stub store.
+// NewClickHouse opens a native-protocol connection.
 func NewClickHouse(cfg ClickHouseConfig) (*ClickHouse, error) {
-	if cfg.DSN == "" {
-		return nil, errors.New("clickhouse: DSN is required")
-	}
 	if cfg.Database == "" {
 		cfg.Database = "apexio"
 	}
 	if cfg.Table == "" {
 		cfg.Table = "logs"
 	}
-	return &ClickHouse{cfg: cfg}, nil
+	if cfg.Username == "" {
+		cfg.Username = "default"
+	}
+
+	var (
+		conn driver.Conn
+		err  error
+	)
+	switch {
+	case cfg.DSN != "":
+		opts, parseErr := clickhouse.ParseDSN(cfg.DSN)
+		if parseErr != nil {
+			return nil, fmt.Errorf("clickhouse: parse DSN: %w", parseErr)
+		}
+		if opts.Auth.Database == "" {
+			opts.Auth.Database = cfg.Database
+		}
+		conn, err = clickhouse.Open(opts)
+	case cfg.Addr != "":
+		conn, err = clickhouse.Open(&clickhouse.Options{
+			Addr: []string{cfg.Addr},
+			Auth: clickhouse.Auth{
+				Database: cfg.Database,
+				Username: cfg.Username,
+				Password: cfg.Password,
+			},
+		})
+	default:
+		return nil, errors.New("clickhouse: DSN or Addr is required")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("clickhouse: open: %w", err)
+	}
+	if err := conn.Ping(context.Background()); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("clickhouse: ping: %w", err)
+	}
+	return &ClickHouse{cfg: cfg, conn: conn}, nil
 }
 
-// WriteBatch is not implemented in Phase 2.
+// WriteBatch inserts events in a single prepared batch.
 func (c *ClickHouse) WriteBatch(ctx context.Context, events []schema.LogEvent) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if c.closed {
+	c.mu.Lock()
+	closed := c.closed
+	conn := c.conn
+	cfg := c.cfg
+	c.mu.Unlock()
+	if closed || conn == nil {
 		return ErrStoreClosed
 	}
 	if len(events) == 0 {
@@ -54,16 +100,64 @@ func (c *ClickHouse) WriteBatch(ctx context.Context, events []schema.LogEvent) e
 			return fmt.Errorf("clickhouse: event[%d]: %w", i, err)
 		}
 	}
-	return fmt.Errorf("%w: clickhouse write batch (phase 3)", ErrNotImplemented)
-}
 
-// Close marks the stub closed.
-func (c *ClickHouse) Close() error {
-	c.closed = true
+	query := fmt.Sprintf(
+		`INSERT INTO %s.%s (
+			timestamp, id, log_level, message, service, host, environment,
+			request_id, client_ip, user_agent, request_method, request_path,
+			response_status, response_duration_ms, attrs
+		)`,
+		cfg.Database, cfg.Table,
+	)
+	batch, err := conn.PrepareBatch(ctx, query)
+	if err != nil {
+		return fmt.Errorf("clickhouse: prepare batch: %w", err)
+	}
+	for _, e := range events {
+		attrs := e.Attrs
+		if attrs == nil {
+			attrs = map[string]string{}
+		}
+		if err := batch.Append(
+			e.Timestamp.UTC(),
+			e.ID,
+			e.LogLevel,
+			e.Message,
+			e.Service,
+			e.Host,
+			e.Environment,
+			e.RequestID,
+			e.ClientIP,
+			e.UserAgent,
+			e.RequestMethod,
+			e.RequestPath,
+			e.ResponseStatus,
+			e.ResponseDurationMs,
+			attrs,
+		); err != nil {
+			return fmt.Errorf("clickhouse: append: %w", err)
+		}
+	}
+	if err := batch.Send(); err != nil {
+		return fmt.Errorf("clickhouse: send: %w", err)
+	}
 	return nil
 }
 
-// Config returns a copy of the stub configuration (test helper).
+// Close closes the ClickHouse connection.
+func (c *ClickHouse) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.closed = true
+	if c.conn == nil {
+		return nil
+	}
+	err := c.conn.Close()
+	c.conn = nil
+	return err
+}
+
+// Config returns a copy of the configuration (test helper).
 func (c *ClickHouse) Config() ClickHouseConfig {
 	return c.cfg
 }

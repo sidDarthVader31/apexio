@@ -1,6 +1,6 @@
-# Apexio deploy (Phase 1)
+# Apexio deploy
 
-Self-hosted infra for the redesigned pipeline: **Redpanda**, **ClickHouse**, and **Grafana**.
+Self-hosted pipeline: **gateway** → **Redpanda** → **writer** → **ClickHouse**, plus **Grafana**.
 
 ## Quick start
 
@@ -9,13 +9,47 @@ From the repository root:
 ```bash
 make up
 # or
-docker compose -f deploy/compose/docker-compose.yml up -d
+docker compose -f deploy/compose/docker-compose.yml up -d --build
 ```
 
 Verify:
 
 ```bash
-make test-phase1
+make test-phase1   # infra
+make test-phase2   # contracts
+make test-phase3   # unit + E2E vertical slice
+```
+
+### Ingest a log (Phase 3)
+
+```bash
+curl -sS -X POST http://127.0.0.1:18080/api/v1/log \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 1,
+    "timestamp": 1732974309000,
+    "logLevel": "INFO",
+    "message": "hello apexio",
+    "metadata": {
+      "requestId": "req-1",
+      "requestMethod": "GET",
+      "requestPath": "/health",
+      "responseStatus": 200,
+      "responseDuration": 12.5
+    },
+    "source": {
+      "host": "localhost",
+      "service": "demo",
+      "environment": "dev"
+    }
+  }'
+```
+
+Then query ClickHouse:
+
+```bash
+docker exec apexio-clickhouse clickhouse-client --query \
+  "SELECT timestamp, service, log_level, message FROM apexio.logs ORDER BY timestamp DESC LIMIT 5"
 ```
 
 Stop (keeps data volumes):
@@ -34,6 +68,8 @@ make clean-volumes
 
 | Service    | Host port | Purpose                          |
 |------------|-----------|----------------------------------|
+| Gateway    | 18080     | REST ingest `POST /api/v1/log`   |
+| Writer     | 8081      | Health only                      |
 | Redpanda   | 19092     | Kafka API                        |
 | Redpanda   | 18081     | Schema Registry                  |
 | Redpanda   | 18082     | HTTP proxy (Pandaproxy)          |
@@ -51,5 +87,5 @@ make clean-volumes
 
 - ClickHouse init SQL runs only on first start of an empty data volume.
 - Grafana installs the ClickHouse plugin on first start (`GF_INSTALL_PLUGINS`); allow ~30–60s before datasource API checks.
-- Application services (gateway/writer) arrive in later phases; Phase 1 is infra only.
-- Shared Go contracts live in [`pkg/`](../pkg/README.md) (Phase 2): `schema.LogEvent`, `broker.Broker`, `store.Store`.
+- Shared Go contracts: [`pkg/`](../pkg/README.md) (`schema.LogEvent`, `broker.Broker`, `store.Store`).
+- App services: [`cmd/gateway`](../cmd/gateway/), [`cmd/writer`](../cmd/writer/).
