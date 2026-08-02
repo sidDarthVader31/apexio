@@ -52,3 +52,4 @@ make clean-volumes
 - ClickHouse init SQL runs only on first start of an empty data volume.
 - Grafana installs the ClickHouse plugin on first start (`GF_INSTALL_PLUGINS`); allow ~30–60s before datasource API checks.
 - Application services (gateway/writer) arrive in later phases; Phase 1 is infra only.
+- Shared Go contracts live in [`pkg/`](../pkg/README.md) (Phase 2): `schema.LogEvent`, `broker.Broker`, `store.Store`.

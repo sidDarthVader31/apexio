@@ -1,7 +1,7 @@
 COMPOSE_FILE := deploy/compose/docker-compose.yml
 COMPOSE := docker compose -f $(COMPOSE_FILE)
 
-.PHONY: up down logs ps test-phase1 restart clean-volumes
+.PHONY: up down logs ps test-phase1 test-phase2 restart clean-volumes
 
 ## Start Phase 1 infra (Redpanda, ClickHouse, Grafana)
 up:
@@ -30,3 +30,7 @@ clean-volumes:
 ## Run Phase 1 infra smoke tests (starts stack if needed)
 test-phase1:
 	./scripts/test-phase1.sh
+
+## Run Phase 2 shared-contract unit tests
+test-phase2:
+	./scripts/test-phase2.sh
