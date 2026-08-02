@@ -19,7 +19,14 @@ make test-phase1   # infra
 make test-phase2   # contracts
 make test-phase3   # REST vertical slice
 make test-phase4   # OTLP + sample client
+make test-phase5   # Grafana dashboards (ClickHouse)
 ```
+
+### Grafana dashboards (Phase 5)
+
+After `make up`, open [http://127.0.0.1:3000/d/apexio-logs/apexio-logs](http://127.0.0.1:3000/d/apexio-logs/apexio-logs) (`admin` / `admin`).
+
+Panels: log volume, error rate, recent errors, response-time distribution, status-code distribution — all backed by `apexio.logs` in ClickHouse. Dashboards are provisioned from [`deploy/grafana/provisioning/dashboards/json/apexio-logs.json`](grafana/provisioning/dashboards/json/apexio-logs.json); no manual token or Job step.
 
 ### Ingest via REST
 
@@ -92,13 +99,13 @@ make clean-volumes
 | Redpanda   | 18082     | HTTP proxy (Pandaproxy)          |
 | ClickHouse | 8123      | HTTP interface                   |
 | ClickHouse | 9000      | Native protocol                  |
-| Grafana    | 3000      | UI (`admin` / `admin`)           |
+| Grafana    | 3000      | UI + provisioned **Apexio Logs** dashboard (`/d/apexio-logs`) |
 
 ## Layout
 
 - [`compose/docker-compose.yml`](compose/docker-compose.yml) — stack definition
 - [`clickhouse/init/01_schema.sql`](clickhouse/init/01_schema.sql) — `apexio.logs` table
-- [`grafana/provisioning/`](grafana/provisioning/) — ClickHouse datasource + dashboard provider
+- [`grafana/provisioning/`](grafana/provisioning/) — ClickHouse datasource + **Apexio Logs** dashboard (as code)
 
 ## Notes
 

@@ -1,0 +1,192 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "showPoints": "auto"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "editorMode": "code",
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Log Volume Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "showPoints": "auto"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "editorMode": "code",
+          "format": 1,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  $__timeInterval_ms(timestamp) AS time,\n  count() AS value\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND log_level IN ('ERROR', 'FATAL')\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" } },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  timestamp,\n  service,\n  log_level,\n  message,\n  request_path,\n  response_status\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND log_level IN ('ERROR', 'FATAL')\nORDER BY timestamp DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Errors",
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 4,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  floor(response_duration_ms / 50) * 50 AS bucket,\n  count() AS count\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND response_duration_ms > 0\nGROUP BY bucket\nORDER BY bucket",
+          "refId": "A"
+        }
+      ],
+      "title": "Response Time Distribution",
+      "type": "barchart"
+    },
+    {
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 5,
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "apexio_clickhouse" },
+          "editorMode": "code",
+          "format": 0,
+          "queryType": "sql",
+          "rawSql": "SELECT\n  toString(response_status) AS status,\n  count() AS count\nFROM apexio.logs\nWHERE $__timeFilter_ms(timestamp)\n  AND response_status > 0\nGROUP BY response_status\nORDER BY count DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Status Code Distribution",
+      "type": "piechart"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 40,
+  "tags": ["apexio", "logs"],
+  "templating": { "list": [] },
+  "time": { "from": "now-12h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Apexio Logs",
+  "uid": "apexio-logs",
+  "version": 1
+}
