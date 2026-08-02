@@ -3,7 +3,7 @@
 // Wire formats:
 //   - REST ingest JSON (legacy /api/v1/log body) via [FromREST] / [ToREST]
 //   - Internal broker payload (flat JSON of LogEvent) via [MarshalEvent] / [UnmarshalEvent]
-//   - OTLP-like attribute bags via [FromOTLPLike] (full OTLP protobuf arrives in Phase 4)
+//   - OTLP protobuf via [LogEventsFromOTLP] (HTTP /v1/logs and gRPC :4317)
 package schema
 
 import (

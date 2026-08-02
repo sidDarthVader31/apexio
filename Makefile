@@ -1,7 +1,7 @@
 COMPOSE_FILE := deploy/compose/docker-compose.yml
 COMPOSE := docker compose -f $(COMPOSE_FILE)
 
-.PHONY: up down logs ps test-phase1 test-phase2 test-phase3 restart clean-volumes
+.PHONY: up down logs ps test-phase1 test-phase2 test-phase3 test-phase4 restart clean-volumes
 
 ## Start stack (infra + gateway + writer); rebuild app images
 up:
@@ -38,3 +38,7 @@ test-phase2:
 ## Run Phase 3 unit + E2E vertical-slice tests
 test-phase3:
 	./scripts/test-phase3.sh
+
+## Run Phase 4 OTLP + sample-client tests
+test-phase4:
+	./scripts/test-phase4.sh

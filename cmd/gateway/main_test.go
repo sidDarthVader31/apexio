@@ -9,14 +9,27 @@ import (
 	"testing"
 	"time"
 
+	commonv1 "go.opentelemetry.io/proto/otlp/common/v1"
+	collogsv1 "go.opentelemetry.io/proto/otlp/collector/logs/v1"
+	logsv1 "go.opentelemetry.io/proto/otlp/logs/v1"
+	resourcev1 "go.opentelemetry.io/proto/otlp/resource/v1"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/sidDarthVader31/apexio/pkg/broker"
 	"github.com/sidDarthVader31/apexio/pkg/schema"
 )
 
-func TestIngestHandlerSuccess(t *testing.T) {
+func newTestHandlers(t *testing.T) (*ingestHandler, *otlpHTTPHandler, *broker.Memory) {
+	t.Helper()
 	bus := broker.NewMemory()
+	pub := &publisher{bus: bus, topic: schema.DefaultTopic}
+	metrics := &ingestMetrics{}
+	return &ingestHandler{pub: pub, metrics: metrics}, &otlpHTTPHandler{pub: pub, metrics: metrics}, bus
+}
+
+func TestIngestHandlerSuccess(t *testing.T) {
+	h, _, bus := newTestHandlers(t)
 	defer bus.Close()
-	h := &ingestHandler{bus: bus, topic: schema.DefaultTopic}
 
 	body := `{
 	  "id": 99,
@@ -47,9 +60,8 @@ func TestIngestHandlerSuccess(t *testing.T) {
 }
 
 func TestIngestHandlerValidationError(t *testing.T) {
-	bus := broker.NewMemory()
+	h, _, bus := newTestHandlers(t)
 	defer bus.Close()
-	h := &ingestHandler{bus: bus, topic: schema.DefaultTopic}
 
 	body := `{"id":1,"timestamp":1,"logLevel":"INFO","message":"x","source":{"service":""}}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/log", bytes.NewBufferString(body))
@@ -66,7 +78,8 @@ func TestIngestHandlerValidationError(t *testing.T) {
 func TestIngestHandlerPublishFailure(t *testing.T) {
 	bus := broker.NewMemory()
 	_ = bus.Close()
-	h := &ingestHandler{bus: bus, topic: schema.DefaultTopic}
+	pub := &publisher{bus: bus, topic: schema.DefaultTopic}
+	h := &ingestHandler{pub: pub, metrics: &ingestMetrics{}}
 
 	body := `{
 	  "id": 1,
@@ -84,9 +97,8 @@ func TestIngestHandlerPublishFailure(t *testing.T) {
 }
 
 func TestIngestHandlerInvalidJSON(t *testing.T) {
-	bus := broker.NewMemory()
+	h, _, bus := newTestHandlers(t)
 	defer bus.Close()
-	h := &ingestHandler{bus: bus, topic: schema.DefaultTopic}
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/log", bytes.NewBufferString("{"))
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
@@ -96,9 +108,8 @@ func TestIngestHandlerInvalidJSON(t *testing.T) {
 }
 
 func TestIngestUsesRequestContext(t *testing.T) {
-	bus := broker.NewMemory()
+	h, _, bus := newTestHandlers(t)
 	defer bus.Close()
-	h := &ingestHandler{bus: bus, topic: schema.DefaultTopic}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
 	cancel()
 	body := `{
@@ -111,16 +122,14 @@ func TestIngestUsesRequestContext(t *testing.T) {
 	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/log", bytes.NewBufferString(body))
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
-	// Cancelled context should fail publish.
 	if rr.Code == http.StatusCreated {
 		t.Fatalf("expected failure on cancelled context, got %d", rr.Code)
 	}
 }
 
 func TestResponseShape(t *testing.T) {
-	bus := broker.NewMemory()
+	h, _, bus := newTestHandlers(t)
 	defer bus.Close()
-	h := &ingestHandler{bus: bus, topic: schema.DefaultTopic}
 	body := `{
 	  "id": 5,
 	  "timestamp": 1732974309000,
@@ -137,5 +146,73 @@ func TestResponseShape(t *testing.T) {
 	}
 	if resp["success"] != true {
 		t.Fatalf("resp=%v", resp)
+	}
+}
+
+func TestOTLPHttpHandlerProtobuf(t *testing.T) {
+	_, oh, bus := newTestHandlers(t)
+	defer bus.Close()
+
+	reqPB := buildOTLPRequest(t, "otlp-http-msg", "demo-service")
+	body, err := proto.Marshal(reqPB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/v1/logs", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	rr := httptest.NewRecorder()
+	oh.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	if len(bus.Messages(schema.DefaultTopic)) != 1 {
+		t.Fatalf("published=%d", len(bus.Messages(schema.DefaultTopic)))
+	}
+	ev, err := schema.UnmarshalEvent(bus.Messages(schema.DefaultTopic)[0].Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ev.Message != "otlp-http-msg" || ev.Service != "demo-service" {
+		t.Fatalf("event=%+v", ev)
+	}
+}
+
+func TestOTLPHttpHandlerInvalid(t *testing.T) {
+	_, oh, bus := newTestHandlers(t)
+	defer bus.Close()
+	req := httptest.NewRequest(http.MethodPost, "/v1/logs", bytes.NewBufferString("not-proto"))
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	rr := httptest.NewRecorder()
+	oh.ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if len(bus.Messages(schema.DefaultTopic)) != 0 {
+		t.Fatal("should not publish")
+	}
+}
+
+func buildOTLPRequest(t *testing.T, message, service string) *collogsv1.ExportLogsServiceRequest {
+	t.Helper()
+	return &collogsv1.ExportLogsServiceRequest{
+		ResourceLogs: []*logsv1.ResourceLogs{{
+			Resource: &resourcev1.Resource{
+				Attributes: []*commonv1.KeyValue{{
+					Key: "service.name",
+					Value: &commonv1.AnyValue{
+						Value: &commonv1.AnyValue_StringValue{StringValue: service},
+					},
+				}},
+			},
+			ScopeLogs: []*logsv1.ScopeLogs{{
+				LogRecords: []*logsv1.LogRecord{{
+					TimeUnixNano: uint64(time.Now().UnixNano()),
+					SeverityText: "INFO",
+					Body: &commonv1.AnyValue{
+						Value: &commonv1.AnyValue_StringValue{StringValue: message},
+					},
+				}},
+			}},
+		}},
 	}
 }

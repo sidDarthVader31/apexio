@@ -95,8 +95,10 @@ services:
         condition: service_healthy
     ports:
       - "18080:8080"
+      - "4317:4317"
     environment:
       GATEWAY_ADDR: ":8080"
+      GATEWAY_OTLP_GRPC_ADDR: ":4317"
       REDPANDA_BROKERS: redpanda:9092
       REDPANDA_CLIENT_ID: apexio-gateway
       LOG_TOPIC: logs.ingestion.raw.v1
